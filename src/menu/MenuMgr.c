@@ -362,6 +362,7 @@ DialogueBox* DialogueBox_Create() {
     db->sliders = NULL;
 
     db->langBtn = 0;
+    db->langLabel = 0;
 
     return db;
 }
@@ -627,6 +628,28 @@ void DialogueBox_Destroy(DialogueBox* db) {
 }
 
 
+/* Word + two language buttons, centred in the window.
+   English: LANGUAGE [ENGLISH][ARABIC]   Arabic: [ENGLISH][ARABIC] (word) */
+static void DialogueBox_LayoutLanguage(Engine *engine, DialogueBox* db) {
+    if (db->langBtn <= 0 || db->buttonsLen < db->langBtn + 2)
+        return;
+
+    int labelW = Engine_GetTextWidth(engine, "LANGUAGE", FONT_CANCUN_10);
+    const int btnW = 180, gap = 10, labelGap = 16;
+    int groupW = labelW + labelGap + 2 * btnW + gap;
+    int startX = db->pos.x - groupW / 2;
+
+    if (Lang_Get() == LANG_AR) {
+        db->buttons[db->langBtn].pos.x     = startX;
+        db->buttons[db->langBtn + 1].pos.x = startX + btnW + gap;
+        db->texts[db->langLabel].pos.x     = startX + 2 * btnW + gap + labelGap;
+    } else {
+        db->texts[db->langLabel].pos.x     = startX;
+        db->buttons[db->langBtn].pos.x     = startX + labelW + labelGap;
+        db->buttons[db->langBtn + 1].pos.x = startX + labelW + labelGap + btnW + gap;
+    }
+}
+
 DialogueBox* DialogueBox_CreateOptions(Engine *engine) {
     DialogueBox* db = DialogueBox_Create();
     db->sizeW = 5;
@@ -683,6 +706,7 @@ DialogueBox* DialogueBox_CreateOptions(Engine *engine) {
     tLang.pos.x = -258;
     tLang.pos.y = slSnd.pos.y + 70;
     strcpy(tLang.str, "LANGUAGE");
+    db->langLabel = db->textsLen;
     DialogueBox_AddText(db, &tLang);
 
     Button bDone;
@@ -695,18 +719,19 @@ DialogueBox* DialogueBox_CreateOptions(Engine *engine) {
 
     /* after DONE, so the other buttons keep their numbers */
     db->langBtn = db->buttonsLen;
+
+
     const char* langs[2] = { "ENGLISH", "ARABIC" };
     for (int i = 0; i < 2; i++) {
         Button b;
         Button_Init(&b);
         Button_SetText(&b, langs[i]);
-        /* right after the word LANGUAGE (its width depends on the language) */
-        int labelW = Engine_GetTextWidth(engine, "LANGUAGE", FONT_CANCUN_10);
-        b.pos.x = -258 + labelW + 18 + i * 190;
+        b.pos.x = 0;   /* placed by DialogueBox_LayoutLanguage */
         b.pos.y = slSnd.pos.y + 52;
         b.pressed = (Lang_Get() == (i == 0 ? LANG_EN : LANG_AR));
         DialogueBox_AddButton(db, &b);
     }
+    DialogueBox_LayoutLanguage(engine, db);
 
     return db;
 }
@@ -720,6 +745,7 @@ void DialogueBox_UpdateOptions(Engine *engine, DialogueBox* db) {
             if (Button_IsClicked(&db->buttons[db->langBtn + i])) {
                 Lang_Set(i == 0 ? LANG_EN : LANG_AR);
                 Engine_SaveSettings(engine);
+                DialogueBox_LayoutLanguage(engine, db);
             }
         }
         db->buttons[db->langBtn].pressed     = (Lang_Get() == LANG_EN);
