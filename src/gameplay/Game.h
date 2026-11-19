@@ -70,6 +70,8 @@ typedef struct _Game {
 	DialogueBox* dbStats;
 	DialogueBox* dbGameOver;
 
+	bool goNextLevel;   /* NEXT LEVEL pressed in the results window */
+
 } Game;
 
 

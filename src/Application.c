@@ -169,6 +169,23 @@ static void ApplicationZuma_Update(LevelMgr *levelMgr, Engine *engine, App *app)
   } else {
     Game_Update(levelMgr, engine, &app->game, &app->inMenu, app->mouseClicked);
     if (app->inMenu) {
+      bool won = app->game.isWon;
+      int next = app->game.lvlID + 1;
+
+      if (won && next < LEVELS_COUNT) {
+        /* after a win the next (now open) level is selected */
+        app->curLvl = next;
+
+        if (app->game.goNextLevel) {
+          /* NEXT LEVEL: play it right away */
+          app->inMenu = 0;
+          Engine_StopMusic(engine);
+          Game_Init(levelMgr, engine, &app->game, app->curLvl, app->curDifficulty);
+          SDL_RenderPresent(engine->render);
+          return;
+        }
+      }
+
       MenuMgr_Set(engine, &app->menuMgr, MR_GAUNTLET);
       return;
     }

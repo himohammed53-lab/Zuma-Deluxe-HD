@@ -16,6 +16,7 @@ void Game_Init(LevelMgr *levelMgr, Engine *engine, Game* game, int lvlID, int di
     game->lives = 0;
     game->isLosed = false;
     game->isWon = false;
+    game->goNextLevel = false;
     game->isOutroEnded = false;
     game->isIntroEnded = false;
     game->totalCoins = 0;
@@ -179,7 +180,9 @@ static bool _Game_isEnd(LevelMgr *levelMgr, Engine *engine, Game* game, int* inM
 
     if (game->dbStats) {
         DialogueBox_Update(engine, game->dbStats);
-        if (DialogueBox_GetBtn(game->dbStats) == 1) {
+        int resBtn = DialogueBox_GetBtn(game->dbStats);
+        if (resBtn == 1 || resBtn == 2) {
+            game->goNextLevel = (resBtn == 2);
             DialogueBox_Destroy(game->dbStats);
             game->dbStats = NULL;
 
@@ -272,7 +275,7 @@ static void _Game_HandleGameWon(Engine *engine, Game* game) {
 
     Engine_PlayMusic(engine, MUS_WIN);
 
-    game->dbStats = DialogueBox_CreateResults();
+    game->dbStats = DialogueBox_CreateResults(game->lvlID + 1 < LEVELS_COUNT);
 
     char buff[8];
     sprintf(buff, "%d", game->score);

@@ -726,7 +726,7 @@ void DialogueBox_UpdateMenu(Engine *engine, DialogueBox* db) {
 }
 
 
-DialogueBox* DialogueBox_CreateResults() {
+DialogueBox* DialogueBox_CreateResults(bool hasNextLevel) {
     DialogueBox* db = DialogueBox_Create();
     strcpy(db->caption, "STATS");
     db->sizeW = 6;
@@ -771,14 +771,24 @@ DialogueBox* DialogueBox_CreateResults() {
         DialogueBox_AddText(db, &tParam[i]);
     }
 
-    // Button
+    // Buttons: OK (back to the levels) and NEXT LEVEL
     Button bOk;
     Button_Init(&bOk);
     Button_SetText(&bOk, "OK");
-    bOk.xscale = 8;
+    bOk.xscale = hasNextLevel ? 3 : 8;
     bOk.pos.x = -297;
     bOk.pos.y = 120;
     DialogueBox_AddButton(db, &bOk);
+
+    if (hasNextLevel) {
+        Button bNext;
+        Button_Init(&bNext);
+        Button_SetText(&bNext, "NEXT LEVEL");
+        bNext.xscale = 3;
+        bNext.pos.x = -297 + 300;
+        bNext.pos.y = 120;
+        DialogueBox_AddButton(db, &bNext);
+    }
 
     DialogueBox_Animate(db);
 

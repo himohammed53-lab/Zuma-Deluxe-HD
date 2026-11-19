@@ -155,7 +155,7 @@ enum _DbResultsTexts {
     DB_RES_TEXT_ACE_TIME
 };
 
-DialogueBox* DialogueBox_CreateResults();
+DialogueBox* DialogueBox_CreateResults(bool hasNextLevel);
 
 enum _DbGameOverTexts {
     DB_GO_TEXT_TOTAL_TIME = 5,
