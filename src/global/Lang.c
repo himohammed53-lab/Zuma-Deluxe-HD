@@ -199,7 +199,9 @@ bool Lang_TextWidth(Engine* engine, const char* str, int fontID, int* width) {
     if (!t)
         return false;
 
-    int w = (int)(t->w * Lang_Zoom(engine, t, fontID, 1.0f));
+    int f2 = (fontID >= 0 && fontID < LANG_FONTS) ? fontID : 1;
+    float wk = (t->style == 'K' && !(s_capH[f2] * engine->scale_y < 25)) ? 0.82f : 1.0f;
+    int w = (int)(t->w * Lang_Zoom(engine, t, fontID, 1.0f) * wk);
     if (rest) {
         s_busy = true;
         w += Engine_GetTextWidth(engine, rest, fontID) + (int)(8 * engine->scale_x);
@@ -265,7 +267,12 @@ bool Lang_DrawText(Engine* engine, const char* str, int fontID,
     float capH = s_capH[f] * engine->scale_y * scale;
     float baselineY = y + capTop + capH;
 
-    SDL_FRect dst = { ax, baselineY - t->baseline * k, t->w * k, t->h * k };
+    float kx = k, ky = k;
+    if (t->style == 'K' && !(s_capH[f] * engine->scale_y < 25)) {
+        kx = k * 0.82f;    /* window titles: narrower ... */
+        ky = k * 1.12f;    /* ... and taller, not squashed */
+    }
+    SDL_FRect dst = { ax, baselineY - t->baseline * ky, t->w * kx, t->h * ky };
 
     /* same colour as the game would give its own letters */
     Uint8 r, g, b, a;

@@ -143,7 +143,7 @@ void Button_Draw(Engine *engine, Button* btn) {
     if (btn->withText) {
         int bWidth = btn->drawW > 0 ? btn->drawW
                    : btn->tRect.w + (btn->tRect.w / 3) * btn->xscale;
-        int cx = btn->pos.x + bWidth / 2 - (btn->drawW > 0 ? 4 : 24);
+        int cx = btn->pos.x + bWidth / 2 - (btn->drawW > 0 ? (Lang_Get() == LANG_AR ? -8 : 4) : 24);
 
         int dx = 0;
         int dy = 0;
@@ -1712,7 +1712,7 @@ void MenuMgr_Draw(LevelMgr *levelMgr, Engine *engine, MenuMgr* m) {
             SDL_Color color = {255, 210, 0, 255};
             Lang_SetButtonStyle(true);
             Engine_DrawTextExt(engine, "LOCKED", FONT_NATIVE_ALIEN_48, color,
-                true, true, WINDOW_WIDTH / 2+16, Lang_Get() == LANG_AR ? 380 : 476);
+                true, true, WINDOW_WIDTH / 2+16, Lang_Get() == LANG_AR ? 432 : 476);
             Lang_SetButtonStyle(false);
         }
     }
