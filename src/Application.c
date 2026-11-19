@@ -92,7 +92,17 @@ static int ApplicationZuma_ShowStartupImage(Engine *engine) {
    without turning it. e.button.x/y are already in game coordinates. */
 #define FROG_TAP_RADIUS 95
 
-static bool s_deadTouch = false;   /* finger on the black side bars */
+static bool s_deadTouch = false;   /* finger on the black side bars or a button */
+
+/* The in-game MENU button (top right): a tap there must press the
+   button, never shoot or turn the frog. A bit bigger than the picture. */
+static int ApplicationZuma_IsOnGameButton(App *app, int x, int y) {
+  if (app->inMenu)
+    return 0;
+  Button* b = &app->game.btnMenu;
+  return x >= b->pos.x - 25 && x <= b->pos.x + b->tRect.w + 25 &&
+         y >= b->pos.y - 25 && y <= b->pos.y + b->tRect.h + 25;
+}
 
 static int ApplicationZuma_IsOnFrog(App *app, Engine *engine) {
   if (app->inMenu)
@@ -134,7 +144,8 @@ static void ApplicationZuma_HandleEvents(App *app, Engine *engine) {
       if (e.button.which == SDL_TOUCH_MOUSEID) {
         if (e.button.button == SDL_BUTTON_LEFT) {
           /* black bars at the sides: dead, the finger does nothing */
-          s_deadTouch = (e.button.x < 0 || e.button.x >= WINDOW_WIDTH);
+          s_deadTouch = (e.button.x < 0 || e.button.x >= WINDOW_WIDTH) ||
+                        ApplicationZuma_IsOnGameButton(app, e.button.x, e.button.y);
           /* finger put on the frog = swap balls on release, frog stays still */
           Engine_SetAimFrozen(s_deadTouch || ApplicationZuma_IsOnFrog(app, engine));
         }
