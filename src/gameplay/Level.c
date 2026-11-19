@@ -467,7 +467,7 @@ int Level_Load(LevelMgr *levelMgr, Engine *engine, Level* level) {
 
     int i;
     for (i = 0; i < level->spiralLen; i++) {
-        char t1, t2, x, y;
+        signed char t1, t2, x, y;
         fread(&t1, 1, 1, file);
         fread(&t2, 1, 1, file);
         fread(&x, 1, 1, file);

@@ -83,6 +83,8 @@ target_compile_definitions(
 # miniaudio backend deps (Windows/macOS need nothing extra)
 if(ANDROID)
     target_link_libraries(ZumaHD PRIVATE m log android ${CMAKE_DL_LIBS})
+    # the game data assumes 'char' is signed, like on PC (ARM default is unsigned)
+    target_compile_options(ZumaHD PRIVATE -fsigned-char)
 elseif(UNIX AND NOT APPLE)
     find_package(Threads REQUIRED)
     target_link_libraries(ZumaHD PRIVATE Threads::Threads m ${CMAKE_DL_LIBS})

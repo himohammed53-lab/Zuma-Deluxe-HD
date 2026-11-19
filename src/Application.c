@@ -90,7 +90,7 @@ static int ApplicationZuma_IsOnFrog(App *app, int x, int y) {
   return dx * dx + dy * dy <= FROG_TAP_RADIUS * FROG_TAP_RADIUS;
 }
 
-static void ApplicationZuma_HandleEvents(App *app) {
+static void ApplicationZuma_HandleEvents(App *app, Engine *engine) {
   app->mouseClicked = 0;
   Engine_InputBeginFrame();
 
@@ -99,6 +99,11 @@ static void ApplicationZuma_HandleEvents(App *app) {
     switch (e.type) {
     case SDL_QUIT:
       exit(0);
+      break;
+    case SDL_WINDOWEVENT:
+      if (e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED ||
+          e.window.event == SDL_WINDOWEVENT_RESIZED)
+        Engine_FillScreen(engine);
       break;
     case SDL_MOUSEBUTTONDOWN:
       if (e.button.button == SDL_BUTTON_LEFT)
@@ -193,7 +198,7 @@ int ApplicationZuma_Start(void) {
   Uint64 nextFrame = SDL_GetPerformanceCounter() + period;
 
   while (app.isRunning) {
-    ApplicationZuma_HandleEvents(&app);
+    ApplicationZuma_HandleEvents(&app, &engine);
 
     ApplicationZuma_Update(&levelMgr, &engine, &app);
 
