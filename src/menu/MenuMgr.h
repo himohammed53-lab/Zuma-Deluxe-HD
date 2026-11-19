@@ -124,6 +124,8 @@ typedef struct _DialogueBox {
 
     int slidersLen;
     Slider* sliders;
+
+    int langBtn;   /* index of the ENGLISH button (ARABIC is next), 0 = none */
 } DialogueBox;
 
 DialogueBox* DialogueBox_Create();

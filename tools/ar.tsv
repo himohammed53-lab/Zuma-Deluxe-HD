@@ -22,11 +22,12 @@ K	GAmE OvER	انتهت اللعبة
 K	PlAYERS	الحسابات
 K	NEW PlAYER	حساب جديد
 K	DElETE	حذف حساب
-K	LOCKED	مقفولة
+K	LOCKED	مغلق
 C	MUSIC VOLUME	صوت الموسيقى
 C	SOUNDS VOLUME	صوت المؤثرات
 C	FULLSCREEN	ملء الشاشة
-A	LANGUAGE: ARABIC	اللغة العربية  Arabic
+A	LANGUAGE	اللغة  Language
+A	ARABIC	العربية
 C	POINTS	النقاط
 C	COMBOS	التتابعات
 C	COINS	العملات

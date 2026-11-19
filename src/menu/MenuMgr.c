@@ -361,6 +361,8 @@ DialogueBox* DialogueBox_Create() {
     db->slidersLen = 0;
     db->sliders = NULL;
 
+    db->langBtn = 0;
+
     return db;
 }
 
@@ -658,22 +660,12 @@ DialogueBox* DialogueBox_CreateOptions(Engine *engine) {
     strcpy(tSnd.str, "SOUNDS VOLUME");
     DialogueBox_AddText(db, &tSnd);
 
-    /* Language checkbox (checked = Arabic). Phones are always full
-       screen, so there it takes the place of the FULLSCREEN box. */
-    CheckBox cbLang;
-    CheckBox_Init(&cbLang);
-    cbLang.checked = (Lang_Get() == LANG_AR);
-    cbLang.pos.y = slSnd.pos.y + 48;
-#ifdef __ANDROID__
-    cbLang.pos.x = -236;
-#else
-    cbLang.pos.x = 30;
-
+#ifndef __ANDROID__
     CheckBox cbFullscr;
     CheckBox_Init(&cbFullscr);
     cbFullscr.checked = engine->fullScr;
     cbFullscr.pos.x = -236;
-    cbFullscr.pos.y = slSnd.pos.y + 48;
+    cbFullscr.pos.y = slSnd.pos.y + 112;
     DialogueBox_AddCheckBox(db, &cbFullscr);
 
     DialogueBoxText tFullscr;
@@ -683,13 +675,14 @@ DialogueBox* DialogueBox_CreateOptions(Engine *engine) {
     strcpy(tFullscr.str, "FULLSCREEN");
     DialogueBox_AddText(db, &tFullscr);
 #endif
-    DialogueBox_AddCheckBox(db, &cbLang);
 
+    /* Language: two buttons, the chosen one stays pressed.
+       "LANGUAGE" and "ARABIC" are always shown in Arabic too. */
     DialogueBoxText tLang;
     DialogueBoxText_Init(&tLang);
-    tLang.pos.x = cbLang.pos.x + 80;
-    tLang.pos.y = cbLang.pos.y + 24;
-    strcpy(tLang.str, "LANGUAGE: ARABIC");
+    tLang.pos.x = -250;
+    tLang.pos.y = slSnd.pos.y + 70;
+    strcpy(tLang.str, "LANGUAGE");
     DialogueBox_AddText(db, &tLang);
 
     Button bDone;
@@ -700,6 +693,19 @@ DialogueBox* DialogueBox_CreateOptions(Engine *engine) {
     bDone.pos.y = 120;
     DialogueBox_AddButton(db, &bDone);
 
+    /* after DONE, so the other buttons keep their numbers */
+    db->langBtn = db->buttonsLen;
+    const char* langs[2] = { "ENGLISH", "ARABIC" };
+    for (int i = 0; i < 2; i++) {
+        Button b;
+        Button_Init(&b);
+        Button_SetText(&b, langs[i]);
+        b.pos.x = -110 + i * 200;
+        b.pos.y = slSnd.pos.y + 52;
+        b.pressed = (Lang_Get() == (i == 0 ? LANG_EN : LANG_AR));
+        DialogueBox_AddButton(db, &b);
+    }
+
     return db;
 }
 
@@ -707,11 +713,15 @@ DialogueBox* DialogueBox_CreateOptions(Engine *engine) {
 void DialogueBox_UpdateOptions(Engine *engine, DialogueBox* db) {
     DialogueBox_Update(engine, db);
 
-    /* last checkbox: language */
-    CheckBox* cbLang = &db->chBoxes[db->chBoxesLen - 1];
-    if (CheckBox_IsClicked(cbLang)) {
-        Lang_Set(CheckBox_IsChecked(cbLang) ? LANG_AR : LANG_EN);
-        Engine_SaveSettings(engine);
+    if (db->langBtn > 0 && db->buttonsLen >= db->langBtn + 2) {
+        for (int i = 0; i < 2; i++) {
+            if (Button_IsClicked(&db->buttons[db->langBtn + i])) {
+                Lang_Set(i == 0 ? LANG_EN : LANG_AR);
+                Engine_SaveSettings(engine);
+            }
+        }
+        db->buttons[db->langBtn].pressed     = (Lang_Get() == LANG_EN);
+        db->buttons[db->langBtn + 1].pressed = (Lang_Get() == LANG_AR);
     }
 
 #ifndef __ANDROID__
@@ -740,6 +750,14 @@ void DialogueBox_UpdateOptions(Engine *engine, DialogueBox* db) {
 DialogueBox* DialogueBox_CreateMenu(Engine *engine) {
     DialogueBox* db = DialogueBox_CreateOptions(engine);
     strcpy(db->caption, "mENU");
+    /* the language is changed from the main menu only */
+    if (db->langBtn > 0) {
+        db->buttonsLen = db->langBtn;
+        db->langBtn = 0;
+        for (int i = 0; i < db->textsLen; i++)
+            if (strcmp(db->texts[i].str, "LANGUAGE") == 0)
+                db->texts[i].color.a = 0;
+    }
 
     strcpy(db->buttons[0].text, "BACK TO GAME");
 

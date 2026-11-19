@@ -26,7 +26,7 @@ import java.io.OutputStream;
 public class ZumaActivity extends SDLActivity {
     private static final String TAG = "ZumaHD";
     private static final String[] CONTENT_FOLDERS = {
-        "fonts", "images", "levels", "music", "sounds"
+        "fonts", "images", "lang", "levels", "music", "sounds"
     };
 
     @Override
