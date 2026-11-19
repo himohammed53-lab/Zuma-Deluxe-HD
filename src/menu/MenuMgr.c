@@ -589,6 +589,8 @@ void DialogueBox_Draw(Engine *engine, DialogueBox* db) {
         Slider_Draw(engine, &db->sliders[i]);
 
     for (int i = 0; i < db->textsLen; i++) {
+        if (db->texts[i].color.a == 0)
+            continue;   /* invisible: drawn elsewhere */
         Engine_DrawTextExt(
             engine, 
             db->texts[i].str,
@@ -1151,6 +1153,7 @@ static DialogueBox* MenuMgr_CreatePlayersDialog(MenuMgr* m) {
         DialogueBoxText t;
         DialogueBoxText_Init(&t);
         t.FontID = FONT_NATIVE_ALIEN_EXT_16;
+        t.color.a = 0;   /* drawn by MenuMgr_DrawProfiles instead */
         t.pos.x = -230;
         t.pos.y = -205 + m->rowsLen * 58;
         SDL_strlcpy(t.str, m->profiles.names[i], sizeof(t.str));
@@ -1435,8 +1438,9 @@ void MenuMgr_DrawProfiles(Engine *engine, MenuMgr* m) {
             SDL_RenderGeometry(engine->render, NULL, v, 3, NULL, 0);
 
             SDL_Color tc = sel ? (SDL_Color){255, 255, 255, 255} : (SDL_Color){255, 255, 0, 255};
-            Engine_DrawTextExt(engine, db->texts[r].str, db->texts[r].FontID, tc,
-                true, false, db->texts[r].pos.x, db->texts[r].pos.y);
+            /* a bit smaller, centred in the bar */
+            Engine_DrawTextExtScale(engine, db->texts[r].str, db->texts[r].FontID, 0.82f, tc,
+                true, false, db->texts[r].pos.x + 6, db->texts[r].pos.y + 2);
         }
     }
 
