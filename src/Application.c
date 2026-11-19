@@ -3,6 +3,7 @@
 #include "global/Consts.h"
 #include "global/Engine.h"
 #include "global/Enums.h"
+#include "global/Lang.h"
 
 
 #include "gameplay/Game.h"
@@ -41,6 +42,7 @@ static int ApplicationZuma_LoadResources(LevelMgr *levelMgr, Engine *engine) {
   if (!Engine_TexturesLoad(engine, filesTextures, TEXTURES_COUNT)) {
     return 3;
   }
+  Lang_ApplyTextures(engine);   /* Arabic button pictures if Arabic */
   if (!Engine_FontsLoad(engine, filesFonts, FONTS_COUNT))
     return 4;
   const int soundCopies = 4;
@@ -63,7 +65,9 @@ static int ApplicationZuma_ShowStartupImage(Engine *engine) {
   char *basePath = Engine_GetBasePath();
 
   char resPath[100];
-  sprintf(resPath, "%simages/disclaimer.jpg", basePath);
+  Engine_LoadSettings(engine);   /* to know the language already */
+  sprintf(resPath, "%simages/%s", basePath,
+          Lang_Get() == LANG_AR ? "disclaimer_ar.jpg" : "disclaimer.jpg");
 
   SDL_free(basePath);
 

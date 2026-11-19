@@ -1,4 +1,5 @@
 #include "MenuMgr.h"
+#include "../global/Lang.h"
 
 
 void Button_Init(Button* btn) {
@@ -146,6 +147,7 @@ void Button_Draw(Engine *engine, Button* btn) {
             dy = +2;
         }
 
+        Lang_SetButtonStyle(true);
         Engine_DrawTextExt(
             engine, 
             btn->text,
@@ -156,6 +158,7 @@ void Button_Draw(Engine *engine, Button* btn) {
             cx + dx,
             btn->pos.y + 18 + dy
         );
+        Lang_SetButtonStyle(false);
     }
 
 }
@@ -568,6 +571,7 @@ void DialogueBox_Draw(Engine *engine, DialogueBox* db) {
     int cDy = 32;
     if (db->drawGodHead)
         cDy = 72;
+    Lang_SetButtonStyle(true);
     Engine_DrawTextExt(
         engine, 
         db->caption, 
@@ -578,6 +582,7 @@ void DialogueBox_Draw(Engine *engine, DialogueBox* db) {
         db->pos.x,
         dPos.y + cDy
     );
+    Lang_SetButtonStyle(false);
 
     for (int i = 0; i < db->buttonsLen; i++)
         Button_Draw(engine, &db->buttons[i]);
@@ -653,6 +658,17 @@ DialogueBox* DialogueBox_CreateOptions(Engine *engine) {
     strcpy(tSnd.str, "SOUNDS VOLUME");
     DialogueBox_AddText(db, &tSnd);
 
+    /* Language checkbox (checked = Arabic). Phones are always full
+       screen, so there it takes the place of the FULLSCREEN box. */
+    CheckBox cbLang;
+    CheckBox_Init(&cbLang);
+    cbLang.checked = (Lang_Get() == LANG_AR);
+    cbLang.pos.y = slSnd.pos.y + 48;
+#ifdef __ANDROID__
+    cbLang.pos.x = -236;
+#else
+    cbLang.pos.x = 30;
+
     CheckBox cbFullscr;
     CheckBox_Init(&cbFullscr);
     cbFullscr.checked = engine->fullScr;
@@ -666,6 +682,15 @@ DialogueBox* DialogueBox_CreateOptions(Engine *engine) {
     tFullscr.pos.y = cbFullscr.pos.y + 24;
     strcpy(tFullscr.str, "FULLSCREEN");
     DialogueBox_AddText(db, &tFullscr);
+#endif
+    DialogueBox_AddCheckBox(db, &cbLang);
+
+    DialogueBoxText tLang;
+    DialogueBoxText_Init(&tLang);
+    tLang.pos.x = cbLang.pos.x + 80;
+    tLang.pos.y = cbLang.pos.y + 24;
+    strcpy(tLang.str, "LANGUAGE: ARABIC");
+    DialogueBox_AddText(db, &tLang);
 
     Button bDone;
     Button_Init(&bDone);
@@ -682,6 +707,14 @@ DialogueBox* DialogueBox_CreateOptions(Engine *engine) {
 void DialogueBox_UpdateOptions(Engine *engine, DialogueBox* db) {
     DialogueBox_Update(engine, db);
 
+    /* last checkbox: language */
+    CheckBox* cbLang = &db->chBoxes[db->chBoxesLen - 1];
+    if (CheckBox_IsClicked(cbLang)) {
+        Lang_Set(CheckBox_IsChecked(cbLang) ? LANG_AR : LANG_EN);
+        Engine_SaveSettings(engine);
+    }
+
+#ifndef __ANDROID__
     if (CheckBox_IsClicked(&db->chBoxes[0])) {
         if (CheckBox_IsChecked(&db->chBoxes[0])) {
             SDL_SetWindowFullscreen(
@@ -692,6 +725,7 @@ void DialogueBox_UpdateOptions(Engine *engine, DialogueBox* db) {
             engine->fullScr = false;
         }
     }
+#endif
 
     if (Slider_IsDragging(&db->sliders[0])) {
         Engine_UpdateMusicVolume(engine);
@@ -1244,18 +1278,27 @@ static DialogueBox* MenuMgr_CreateDeleteDialog(const char* name) {
     db->sizeH = 3;
     strcpy(db->caption, "DElETE");
 
+    DialogueBoxText tn;
+    DialogueBoxText_Init(&tn);
+    tn.FontID = FONT_NATIVE_ALIEN_EXT_16;
+    tn.color.b = 255;
+    tn.pos.x = -260;
+    tn.pos.y = -118;
+    SDL_strlcpy(tn.str, name, sizeof(tn.str));
+    DialogueBox_AddText(db, &tn);
+
     DialogueBoxText t;
     DialogueBoxText_Init(&t);
     t.pos.x = -260;
-    t.pos.y = -80;
-    SDL_snprintf(t.str, sizeof(t.str), "DELETE %s AND ALL", name);
+    t.pos.y = -50;
+    strcpy(t.str, "DELETE THIS ACCOUNT");
     DialogueBox_AddText(db, &t);
 
     DialogueBoxText t2;
     DialogueBoxText_Init(&t2);
     t2.pos.x = -260;
-    t2.pos.y = -50;
-    strcpy(t2.str, "THEIR PROGRESS?");
+    t2.pos.y = -18;
+    strcpy(t2.str, "AND ALL ITS PROGRESS?");
     DialogueBox_AddText(db, &t2);
 
     Button bYes;
@@ -1563,8 +1606,10 @@ void MenuMgr_Draw(LevelMgr *levelMgr, Engine *engine, MenuMgr* m) {
             SDL_SetTextureColorMod(thumb, 255, 255, 255);
 
             SDL_Color color = {255, 210, 0, 255};
+            Lang_SetButtonStyle(true);
             Engine_DrawTextExt(engine, "LOCKED", FONT_NATIVE_ALIEN_48, color,
                 true, true, WINDOW_WIDTH / 2+16, 476);
+            Lang_SetButtonStyle(false);
         }
     }
     

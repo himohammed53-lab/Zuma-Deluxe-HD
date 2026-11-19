@@ -1,0 +1,71 @@
+# Arabic translation for Zuma HD.
+# style<TAB>English text exactly as the game draws it<TAB>Arabic
+# style: K = Kufi (buttons, titles)   C = clear font (texts)
+#        A = clear font, shown even when the game is in English
+# An English text ending with * is a prefix: the rest (numbers, names)
+# is drawn after it with the normal font.
+K	OK	موافق
+K	CANCEL	إلغاء
+K	NEW	جديد
+K	DELETE	حذف
+K	YES	نعم
+K	NO	لا
+K	DONE	تم
+K	BACK TO GAME	العودة إلى اللعب
+K	RETURN TO MAIN MENU	القائمة الرئيسية
+K	MAIN MENU	القائمة الرئيسية
+K	NEXT	التالي
+K	OPTIONS	الإعدادات
+K	mENU	القائمة
+K	STATS	النتائج
+K	GAmE OvER	انتهت اللعبة
+K	PlAYERS	الحسابات
+K	NEW PlAYER	حساب جديد
+K	DElETE	حذف حساب
+K	LOCKED	مقفولة
+C	MUSIC VOLUME	صوت الموسيقى
+C	SOUNDS VOLUME	صوت المؤثرات
+C	FULLSCREEN	ملء الشاشة
+A	LANGUAGE: ARABIC	اللغة العربية  Arabic
+C	POINTS	النقاط
+C	COMBOS	التتابعات
+C	COINS	العملات
+C	MAX CHAIN	أطول سلسلة
+C	MAX COMBO	أعلى تتابع
+C	YOUR TIME	وقتك
+C	ACE TIME	الوقت القياسي
+C	TIME	الوقت
+C	ENTER YOUR NAME:	اكتب اسمك:
+C	PLEASE TYPE A NAME	من فضلك اكتب اسماً
+C	THIS NAME IS ALREADY USED	هذا الاسم مستخدم من قبل
+C	DELETE THIS ACCOUNT	حذف هذا الحساب
+C	AND ALL ITS PROGRESS?	وكل تقدّمه؟
+C	BEST SCORE:	أفضل نتيجة:
+C	BEST TIME:	أفضل وقت:
+C	WELCOME TO ZUMA HD!	أهلاً بك في زوما!
+C	WELCOME TO ZUMA HD, *	أهلاً بك في زوما يا
+C	LEVEL *	المرحلة
+C	CHAIN BONUS x*	مكافأة السلسلة
+C	COMBO x*	تتابع
+C	BONUS +500	مكافأة 500+
+C	Altar of Tlaloc	مذبح تلالوك
+C	Breath of Ehecatl	أنفاس إيهيكاتل
+C	Codex of Mixtec	مخطوطة المكستك
+C	Dark Vortex	الدوامة المظلمة
+C	Lair of the Mud Snake	وكر أفعى الطين
+C	Landing Pad	منصة الهبوط
+C	Long Range	المدى البعيد
+C	Mirror Serpent	الأفعى المرآة
+C	Mouth of Centeotl	فم سينتيوتل
+C	Mud Slide	الانزلاق الطيني
+C	Osprey Talon	مخلب العقاب
+C	Riverbed Mosaic	فسيفساء قاع النهر
+C	Rorschach	بقع رورشاخ
+C	Sand Garden	حديقة الرمال
+C	Shrine of Quetzalcoatl	ضريح كيتزالكواتل
+C	Snake Pit	حفرة الأفاعي
+C	Spiral of Doom	دوامة الهلاك
+C	Sun Stone	حجر الشمس
+C	Switchback	الطريق المتعرّج
+C	When Spirals Attack	عندما تهاجم الدوامات
+C	Zumaic Exodus	رحيل زوما

@@ -27,6 +27,11 @@ Zuma HD running on Android phones: 60 FPS, touch controls.
 * **Shoot:** lift your finger, or just tap anywhere - the frog shoots at that spot.
 * **Swap balls:** tap the frog.
 
+**Arabic:** Options -> "اللغة العربية Arabic" switches the whole game to Arabic
+(menus, stones, buttons, windows, level names). Arabic fonts: Reem Kufi and
+Lalezar (SIL Open Font License, see `tools/fonts`). The Arabic pictures are made
+by the scripts in `tools/`.
+
 The APK is built automatically by GitHub Actions (`Actions` tab -> `Android APK` -> `ZumaHD-APK`).
 It is for personal use only: the game graphics, sounds and music belong to PopCap and EA.
 

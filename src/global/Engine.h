@@ -34,7 +34,7 @@ typedef struct _Font {
 	int* kerningValues;
 } Font;
 
-typedef struct {
+typedef struct _Engine {
     /* Graphics */
     SDL_Window* 	win;
 	SDL_Renderer* 	render;

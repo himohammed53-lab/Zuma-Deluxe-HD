@@ -1,4 +1,5 @@
 #include "Engine.h"
+#include "Lang.h"
 #include "SDL_log.h"
 #include "SDL_pixels.h"
 #include "SDL_stdinc.h"
@@ -423,6 +424,9 @@ void Engine_DrawTextScale(Engine *engine, const char* str, int fontID, float sca
     if (fontID < 0 || fontID >= engine->fontsLen)
         return;
 
+    if (Lang_DrawText(engine, str, fontID, scale, x, y))
+        return;   /* drawn in Arabic */
+
     int i = 0;
     int width = 0;
     int height = 0;
@@ -476,6 +480,10 @@ void Engine_DrawText(Engine *engine, const char* str, int fontID, float x, float
 int Engine_GetTextWidth(Engine *engine, const char* str, int fontID) {
     if (fontID < 0 || fontID >= engine->fontsLen)
         return 0;
+
+    int arWidth;
+    if (Lang_TextWidth(engine, str, fontID, &arWidth))
+        return arWidth;
 
     int i = 0;
     int maxWidth = 0;
@@ -808,13 +816,16 @@ int Engine_SaveSettings(Engine *engine) {
     int snd = (int)(engine->volSnd * 100);
     fprintf(file, "SOUNDS %d\n", snd);
 
-    fprintf(file, "FULLSCREEN %d", engine->fullScr);
+    fprintf(file, "FULLSCREEN %d\n", engine->fullScr);
+    fprintf(file, "LANGUAGE %d", Lang_Get());
 
     fclose(file);
     return 1;
 }
 
 int Engine_LoadSettings(Engine *engine) {
+    Lang_Init(engine);
+
     FILE* file;
     file = fopen("settings.txt", "r");
     if (!file) {
@@ -882,5 +893,11 @@ int Engine_LoadSettings(Engine *engine) {
         return 0;
     }
 
+    /* added later: older settings files don't have it */
+    int lang = 0;
+    if (fscanf(file, "%10s %d", buff, &lang) == 2 && strcmp(buff, "LANGUAGE") == 0)
+        Lang_Set(lang == LANG_AR ? LANG_AR : LANG_EN);
+
+    fclose(file);
     return 1;
 }

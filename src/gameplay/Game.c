@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "../global/Lang.h"
 #include "Level.h"
 
 void constrain(int* a, int min, int max) {
@@ -639,7 +640,10 @@ void Game_DrawHUD(Engine *engine, Game* game) {
     sprintf(buff, "%9d", game->score);
     Engine_DrawTextExt(engine, buff, FONT_CANCUN_12, yellow, 0, 0, 545, 6);
 
-    sprintf(buff, "lvl%d-%d", game->stageID + 1, game->lvlID + 1);
+    if (Lang_Get() == LANG_AR)
+        sprintf(buff, "%d-%d", game->stageID + 1, game->lvlID + 1);   /* small box */
+    else
+        sprintf(buff, "lvl%d-%d", game->stageID + 1, game->lvlID + 1);
     Engine_DrawTextExt(engine, buff, FONT_CANCUN_12, yellow, 0, 1, 460, 6);
 
     SDL_Rect animFrogRect = {40, 18, 40, 36};
