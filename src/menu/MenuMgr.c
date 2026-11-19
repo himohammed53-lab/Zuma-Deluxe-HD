@@ -1152,7 +1152,7 @@ static DialogueBox* MenuMgr_CreatePlayersDialog(MenuMgr* m) {
         DialogueBoxText_Init(&t);
         t.FontID = FONT_NATIVE_ALIEN_EXT_16;
         t.pos.x = -230;
-        t.pos.y = -190 + m->rowsLen * 50;
+        t.pos.y = -205 + m->rowsLen * 58;
         SDL_strlcpy(t.str, m->profiles.names[i], sizeof(t.str));
         DialogueBox_AddText(db, &t);
 
@@ -1299,11 +1299,6 @@ void MenuMgr_UpdateProfiles(LevelMgr *levelMgr, Engine *engine, MenuMgr* m) {
         MenuMgr_OpenNewPlayer(m);
     }
 
-    /* "Not you?" under the welcome line */
-    if (!m->inDialog && MenuMgr_ClickedIn(engine, 340, 0, 940, 64)) {
-        m->selSlot = m->profiles.current;
-        m->dbPlayers = MenuMgr_CreatePlayersDialog(m);
-    }
 
     if (m->dbNewPlayer) {
         DialogueBox* db = m->dbNewPlayer;
@@ -1395,7 +1390,6 @@ void MenuMgr_UpdateProfiles(LevelMgr *levelMgr, Engine *engine, MenuMgr* m) {
 }
 
 void MenuMgr_DrawWelcome(Engine *engine, MenuMgr* m) {
-    SDL_Color yellow = {255, 230, 120, 255};
     SDL_Color white  = {255, 255, 255, 255};
     char buff[64];
 
@@ -1404,8 +1398,6 @@ void MenuMgr_DrawWelcome(Engine *engine, MenuMgr* m) {
         SDL_snprintf(buff, sizeof(buff), "WELCOME TO ZUMA HD, %s!", m->profiles.names[cur]);
         Engine_DrawTextExt(engine, buff, FONT_NATIVE_ALIEN_EXT_16, white, false, true, 640, 0);
 
-        SDL_snprintf(buff, sizeof(buff), "(TAP HERE IF YOU ARE NOT %s)", m->profiles.names[cur]);
-        Engine_DrawTextExt(engine, buff, FONT_CANCUN_10, yellow, true, true, 640, 62);
     } else {
         Engine_DrawTextExt(engine, "WELCOME TO ZUMA HD!", FONT_NATIVE_ALIEN_EXT_16, white, false, true, 640, 0);
     }
@@ -1418,22 +1410,36 @@ void MenuMgr_DrawProfiles(Engine *engine, MenuMgr* m) {
         DialogueBox* db = m->dbPlayers;
         DialogueBox_Draw(engine, db);
 
-        /* frame around the chosen player */
+        /* every name is a bar you can tap, with an arrow on the right;
+           the chosen one is darker with a gold frame */
         for (int r = 0; r < m->rowsLen && !db->animation; r++) {
-            if (m->rowSlot[r] != m->selSlot)
-                continue;
+            bool sel = m->rowSlot[r] == m->selSlot;
             SDL_Rect bar = { db->pos.x - 270, db->texts[r].pos.y + 10, 540, 48 };
-            SDL_SetRenderDrawBlendMode(engine->render, SDL_BLENDMODE_BLEND);
-            SDL_SetRenderDrawColor(engine->render, 0, 0, 0, 110);
-            SDL_RenderFillRect(engine->render, &bar);
-            SDL_SetRenderDrawColor(engine->render, 255, 220, 0, 255);
-            SDL_RenderDrawRect(engine->render, &bar);
 
-            SDL_Color white = {255, 255, 255, 255};
-            Engine_DrawTextExt(engine, db->texts[r].str, db->texts[r].FontID, white,
+            SDL_SetRenderDrawBlendMode(engine->render, SDL_BLENDMODE_BLEND);
+            SDL_SetRenderDrawColor(engine->render, 0, 0, 0, sel ? 120 : 45);
+            SDL_RenderFillRect(engine->render, &bar);
+            if (sel) {
+                SDL_SetRenderDrawColor(engine->render, 255, 220, 0, 255);
+                SDL_RenderDrawRect(engine->render, &bar);
+            }
+
+            /* arrow pointing at the name */
+            float ax = bar.x + bar.w - 18, ay = bar.y + bar.h / 2.0f;
+            SDL_Color ac = sel ? (SDL_Color){255, 230, 60, 255} : (SDL_Color){255, 230, 60, 150};
+            SDL_Vertex v[3] = {
+                { { ax,      ay - 12 }, ac, { 0, 0 } },
+                { { ax,      ay + 12 }, ac, { 0, 0 } },
+                { { ax - 18, ay      }, ac, { 0, 0 } },
+            };
+            SDL_RenderGeometry(engine->render, NULL, v, 3, NULL, 0);
+
+            SDL_Color tc = sel ? (SDL_Color){255, 255, 255, 255} : (SDL_Color){255, 255, 0, 255};
+            Engine_DrawTextExt(engine, db->texts[r].str, db->texts[r].FontID, tc,
                 true, false, db->texts[r].pos.x, db->texts[r].pos.y);
         }
     }
+
     if (m->dbNewPlayer) {
         DialogueBox* db = m->dbNewPlayer;
         DialogueBox_Draw(engine, db);
