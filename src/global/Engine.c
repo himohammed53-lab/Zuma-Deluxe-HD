@@ -130,26 +130,10 @@ int Engine_CreateWindow(Engine *engine, const char* cap, int w, int h) {
     }
 
     SDL_RenderSetLogicalSize(engine->render, w, h);
-    Engine_FillScreen(engine);
 
     return 1;
 }
 
-void Engine_FillScreen(Engine *engine) {
-#ifdef __ANDROID__
-    /* Phones are wider than 16:9: stretch the game over the whole
-       screen instead of leaving black bars on the sides. */
-    int ow, oh;
-    if (SDL_GetRendererOutputSize(engine->render, &ow, &oh) != 0 || ow <= 0 || oh <= 0)
-        return;
-
-    SDL_RenderSetScale(engine->render, ow / WINDOW_WIDTH, oh / WINDOW_HEIGHT);
-    SDL_Rect full = { 0, 0, (int)WINDOW_WIDTH, (int)WINDOW_HEIGHT };
-    SDL_RenderSetViewport(engine->render, &full);
-#else
-    (void)engine;
-#endif
-}
 
 SDL_Texture* Engine_TextureLoad(Engine *engine, const char* fileName) {
     int imgw, imgh, imgchannels, wantchannels = 4;

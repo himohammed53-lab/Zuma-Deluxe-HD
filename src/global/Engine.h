@@ -110,9 +110,6 @@ void Engine_StopSoundSfx(Engine*, int);
 
 void Engine_GetMousePos(Engine *engine, int* mx, int* my);
 
-/* Android: stretch the 1280x720 game over the whole screen */
-void Engine_FillScreen(Engine *engine);
-
 /* Pointer (mouse / touch) state, updated by the app event loop.
    A press is always visible for at least one frame, so a quick tap
    on a phone still clicks menu buttons. */

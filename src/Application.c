@@ -100,11 +100,6 @@ static void ApplicationZuma_HandleEvents(App *app, Engine *engine) {
     case SDL_QUIT:
       exit(0);
       break;
-    case SDL_WINDOWEVENT:
-      if (e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED ||
-          e.window.event == SDL_WINDOWEVENT_RESIZED)
-        Engine_FillScreen(engine);
-      break;
     case SDL_MOUSEBUTTONDOWN:
       if (e.button.button == SDL_BUTTON_LEFT)
         Engine_InputPointerDown();
