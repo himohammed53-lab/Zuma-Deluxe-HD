@@ -18,6 +18,7 @@ void Game_Init(LevelMgr *levelMgr, Engine *engine, Game* game, int lvlID, int di
     game->isLosed = false;
     game->isWon = false;
     game->goNextLevel = false;
+    game->retryLevel = false;
     game->isOutroEnded = false;
     game->isIntroEnded = false;
     game->totalCoins = 0;
@@ -203,7 +204,9 @@ static bool _Game_isEnd(LevelMgr *levelMgr, Engine *engine, Game* game, int* inM
 
     if (game->dbGameOver) {
         DialogueBox_Update(engine, game->dbGameOver);
-        if (DialogueBox_GetBtn(game->dbGameOver) == 1) {
+        int goBtn = DialogueBox_GetBtn(game->dbGameOver);
+        if (goBtn == 1 || goBtn == 2) {
+            game->retryLevel = (goBtn == 1);
             DialogueBox_Destroy(game->dbGameOver);
             game->dbGameOver = NULL;
             *inMenu = 1;

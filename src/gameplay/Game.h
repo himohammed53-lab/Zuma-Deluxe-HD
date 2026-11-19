@@ -71,6 +71,7 @@ typedef struct _Game {
 	DialogueBox* dbGameOver;
 
 	bool goNextLevel;   /* NEXT LEVEL pressed in the results window */
+	bool retryLevel;    /* TRY AGAIN pressed in the game over window */
 
 } Game;
 

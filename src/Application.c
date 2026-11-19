@@ -199,6 +199,15 @@ static void ApplicationZuma_Update(LevelMgr *levelMgr, Engine *engine, App *app)
         }
       }
 
+      if (!won && app->game.retryLevel) {
+        /* TRY AGAIN: play the same level again */
+        app->inMenu = 0;
+        Engine_StopMusic(engine);
+        Game_Init(levelMgr, engine, &app->game, app->game.lvlID, app->curDifficulty);
+        SDL_RenderPresent(engine->render);
+        return;
+      }
+
       /* MAIN MENU in the results window goes to the main menu */
       MenuMgr_Set(engine, &app->menuMgr, won ? MR_MAIN : MR_GAUNTLET);
       return;

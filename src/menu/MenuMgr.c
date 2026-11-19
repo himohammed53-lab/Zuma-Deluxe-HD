@@ -961,13 +961,22 @@ DialogueBox* DialogueBox_CreateGameOver() {
     }
 
     // Button
-    Button bOk;
-    Button_Init(&bOk);
-    Button_SetText(&bOk, "OK");
-    bOk.xscale = 8;
-    bOk.pos.x = -297;
-    bOk.pos.y = 120;
-    DialogueBox_AddButton(db, &bOk);
+    /* TRY AGAIN (left) and LEAVE (right) */
+    Button bRetry;
+    Button_Init(&bRetry);
+    Button_SetText(&bRetry, "TRY AGAIN");
+    bRetry.xscale = 3;
+    bRetry.pos.x = -297;
+    bRetry.pos.y = 120;
+    DialogueBox_AddButton(db, &bRetry);
+
+    Button bLeave;
+    Button_Init(&bLeave);
+    Button_SetText(&bLeave, "LEAVE");
+    bLeave.xscale = 3;
+    bLeave.pos.x = -297 + 300;
+    bLeave.pos.y = 120;
+    DialogueBox_AddButton(db, &bLeave);
 
     DialogueBox_Animate(db);
 
@@ -1712,7 +1721,8 @@ void MenuMgr_Draw(LevelMgr *levelMgr, Engine *engine, MenuMgr* m) {
             SDL_Color color = {255, 210, 0, 255};
             Lang_SetButtonStyle(true);
             Engine_DrawTextExt(engine, "LOCKED", FONT_NATIVE_ALIEN_48, color,
-                true, true, WINDOW_WIDTH / 2+16, Lang_Get() == LANG_AR ? 432 : 476);
+                true, true, WINDOW_WIDTH / 2 + (Lang_Get() == LANG_AR ? -4 : 16),
+                Lang_Get() == LANG_AR ? 432 : 476);
             Lang_SetButtonStyle(false);
         }
     }
