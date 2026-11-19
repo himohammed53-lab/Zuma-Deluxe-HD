@@ -24,6 +24,7 @@ void Button_Init(Button* btn) {
 
     btn->xscale = 1;
     btn->textScale = 1.0f;
+    btn->drawW = 0;
 
     btn->pos.x = 0;
     btn->pos.y = 0;
@@ -40,7 +41,8 @@ void Button_Update(Engine *engine, Button* btn) {
     int mx, my;
     Engine_GetMousePos(engine, &mx, &my);
 
-    int bWidth = btn->tRect.w + (btn->tRect.w / 3) * (btn->xscale-1);
+    int bWidth = btn->drawW > 0 ? btn->drawW
+               : btn->tRect.w + (btn->tRect.w / 3) * (btn->xscale-1);
 
     if (mx > btn->pos.x + btn->deadBorder && 
         my > btn->pos.y + btn->deadBorder &&
@@ -120,6 +122,12 @@ void Button_Draw(Engine *engine, Button* btn) {
             else 
                 srcRect.x = srcRect.w*dx + btn->tRect.x;
 
+            /* drawW: the middle part is stretched to reach that width */
+            int segW = srcRect.w;
+            if (btn->drawW > 0 && dx == 1)
+                dstRect.w = (btn->drawW - 2 * srcRect.w) / btn->xscale;
+            else
+                dstRect.w = segW;
             SDL_RenderCopy(
                 engine->render, 
                 tex,
@@ -127,14 +135,15 @@ void Button_Draw(Engine *engine, Button* btn) {
                 &dstRect
             );
 
-            dstRect.x += srcRect.w;
+            dstRect.x += dstRect.w;
         }
     }
 
     // DrawText
     if (btn->withText) {
-        int bWidth = btn->tRect.w + (btn->tRect.w / 3) * btn->xscale;
-        int cx = btn->pos.x + bWidth / 2 - 24;
+        int bWidth = btn->drawW > 0 ? btn->drawW
+                   : btn->tRect.w + (btn->tRect.w / 3) * btn->xscale;
+        int cx = btn->pos.x + bWidth / 2 - (btn->drawW > 0 ? 4 : 24);
 
         int dx = 0;
         int dy = 0;
@@ -643,7 +652,7 @@ static void DialogueBox_LayoutOptions(Engine *engine, DialogueBox* db) {
         return;
 
     bool ar = Lang_Get() == LANG_AR;
-    const int btnW = 180, gap = -10, labelGap = 10;   /* buttons with xscale 1 */
+    const int btnW = 150, gap = -10, labelGap = 10;   /* drawW 150 */
     int left  = db->pos.x + DB_OPTIONS_LABEL_X;       /* English labels start here */
     int right = db->pos.x - DB_OPTIONS_LABEL_X;       /* Arabic labels end here */
 
@@ -751,7 +760,8 @@ DialogueBox* DialogueBox_CreateOptions(Engine *engine) {
         Button b;
         Button_Init(&b);
         Button_SetText(&b, langs[i]);
-        b.xscale = 1;  /* 180 px */
+        b.xscale = 2;      /* segmented button, stretched to drawW */
+        b.drawW = 150;
         b.textScale = 0.8f;
         b.pos.x = 0;   /* placed by DialogueBox_LayoutOptions */
         b.pos.y = slSnd.pos.y + 52;
@@ -777,6 +787,10 @@ void DialogueBox_UpdateOptions(Engine *engine, DialogueBox* db) {
         }
         db->buttons[db->langBtn].pressed     = (Lang_Get() == LANG_EN);
         db->buttons[db->langBtn + 1].pressed = (Lang_Get() == LANG_AR);
+        /* on a phone the "mouse" stays where the finger was: no hover look */
+        for (int i = 0; i < 2; i++)
+            if (db->buttons[db->langBtn + i].state == BTN_HOVER)
+                db->buttons[db->langBtn + i].state = BTN_IDLE;
     }
 
 #ifndef __ANDROID__
@@ -1698,7 +1712,7 @@ void MenuMgr_Draw(LevelMgr *levelMgr, Engine *engine, MenuMgr* m) {
             SDL_Color color = {255, 210, 0, 255};
             Lang_SetButtonStyle(true);
             Engine_DrawTextExt(engine, "LOCKED", FONT_NATIVE_ALIEN_48, color,
-                true, true, WINDOW_WIDTH / 2+16, 476);
+                true, true, WINDOW_WIDTH / 2+16, Lang_Get() == LANG_AR ? 380 : 476);
             Lang_SetButtonStyle(false);
         }
     }

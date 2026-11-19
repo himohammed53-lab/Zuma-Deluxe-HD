@@ -37,6 +37,7 @@ typedef struct _Button {
     int textureID;
 
     float textScale;   /* size of the button text, 1 = normal */
+    int drawW;         /* > 0: exact width of a stretchable button */
 
     char text[32];
 } Button;

@@ -809,10 +809,29 @@ void Game_DrawIntro(Engine *engine, Game* game) {
     Engine_DrawTextExtScale(engine, buff, FONT_NATIVE_ALIEN_EXT_16, game->subHeaderFontScale, color, false, true, 
         WINDOW_WIDTH - 250, WINDOW_HEIGHT - 95);
 
-    if (Lang_Get() == LANG_AR)
-        sprintf(buff, "LEVEL %d - %d", game->lvlID + 1, game->difficulty + 1);
-    else
-        sprintf(buff, "LEVEL %d-%d", game->lvlID + 1, game->difficulty + 1);
+    if (Lang_Get() == LANG_AR) {
+        /* Arabic: the word "LEVEL" and a smaller level number on its left,
+           higher up so it doesn't cover the level name */
+        float s = game->headerFontScale;
+        float y = WINDOW_HEIGHT - 245;
+        float ns = s * 0.55f;
+        char num[8];
+        sprintf(num, "%d", game->lvlID + 1);
+        int ww = (int)(Engine_GetTextWidth(engine, "LEVEL", FONT_NATIVE_ALIEN_48) * s);
+        int nw = (int)(Engine_GetTextWidth(engine, num, FONT_NATIVE_ALIEN_48) * ns);
+        int gap = (int)(18 * s);
+        float cx = WINDOW_WIDTH - 250;
+        float left = cx - (ww + gap + nw) / 2.0f;
+        if (left + ww + gap + nw > WINDOW_WIDTH - 30)
+            left = WINDOW_WIDTH - 30 - (ww + gap + nw);
+        float capBottom = 84 * engine->scale_y;   /* top + height of the capitals */
+        Engine_DrawTextExtScale(engine, num, FONT_NATIVE_ALIEN_48, ns, color, false, false,
+            left, y + capBottom * (s - ns));
+        Engine_DrawTextExtScale(engine, "LEVEL", FONT_NATIVE_ALIEN_48, s, color, false, false,
+            left + nw + gap, y);
+        return;
+    }
+    sprintf(buff, "LEVEL %d-%d", game->lvlID + 1, game->difficulty + 1);
     /* keep the whole title on the screen (Arabic is wider) */
     float hx = WINDOW_WIDTH - 250;
     int hw = (int)(Engine_GetTextWidth(engine, buff, FONT_NATIVE_ALIEN_48) * game->headerFontScale);

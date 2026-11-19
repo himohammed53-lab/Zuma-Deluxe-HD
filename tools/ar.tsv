@@ -22,7 +22,7 @@ K	GAmE OvER	انتهت اللعبة
 K	PlAYERS	الحسابات
 K	NEW PlAYER	حساب جديد
 K	DElETE	حذف حساب
-K	LOCKED	مغلق
+K	LOCKED	مقفل
 C	MUSIC VOLUME	صوت الموسيقى
 C	SOUNDS VOLUME	صوت المؤثرات
 C	FULLSCREEN	ملء الشاشة
@@ -46,6 +46,7 @@ C	BEST SCORE:	أفضل نتيجة:
 C	BEST TIME:	أفضل وقت:
 K	WELCOME TO ZUMA HD!	مرحباً   بك   في   زوما   النسخة   المحسّنة
 C	LEVEL *	المرحلة
+C	LEVEL	المرحلة
 C	CHAIN BONUS x*	مكافأة السلسلة
 C	COMBO x*	تتابع
 C	BONUS +500	مكافأة 500+
