@@ -1212,8 +1212,6 @@ void MenuMgr_Draw(LevelMgr *levelMgr, Engine *engine, MenuMgr* m) {
 
         Engine_DrawText(engine, "WELCOME TO ZUMA HD!", FONT_NATIVE_ALIEN_EXT_16, 426, 0);
 
-        Engine_DrawText(engine, "REMASTER BY\nGALAXYSHAD AND S4LAT. 2021", FONT_CANCUN_10, 16, 660);
-        Engine_DrawText(engine, "ORIGINAL GAME BY POPCAP. 2003", FONT_CANCUN_10, 16, 694);
 
     } else if (m->roomID == MR_GAUNTLET) {
         char buff[32];

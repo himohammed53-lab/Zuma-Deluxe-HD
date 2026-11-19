@@ -236,8 +236,10 @@ int LevelMgr_LoadLevels(LevelMgr *levelMgr, const char* fileName) {
     levelMgr->survivalLevels = NULL;
     levelMgr->survivalLevelsLen = 0;
 
-    for (int i = 0; i < 11; i++) {
-        for (int j = 0; j < 11; j++) {
+    /* clear ALL saved results (the old loop missed the last levels,
+       leaving random numbers that unlocked them) */
+    for (int i = 0; i < LEVELS_COUNT; i++) {
+        for (int j = 0; j < 4; j++) {
             levelMgr->bestScore[i][j] = 0;
             levelMgr->bestTime[i][j]  = 0;
         }
@@ -299,8 +301,11 @@ bool LevelMgr_IsLevelUnlocked(LevelMgr *levelMgr, int lvl) {
     return false;
 }
 
+/* v2: progress.bin from older builds could hold random numbers */
+#define PROGRESS_FILE "progress2.bin"
+
 int LevelMgr_SaveProgress(LevelMgr *levelMgr) {
-    FILE* file = fopen("progress.bin", "wb");
+    FILE* file = fopen(PROGRESS_FILE, "wb");
     if (!file) {
         return 0;
     }
@@ -320,7 +325,7 @@ int LevelMgr_SaveProgress(LevelMgr *levelMgr) {
 }
 
 int LevelMgr_LoadProgress(LevelMgr *levelMgr) {
-    FILE* file = fopen("progress.bin", "rb");
+    FILE* file = fopen(PROGRESS_FILE, "rb");
     if (!file) {
         if (!LevelMgr_SaveProgress(levelMgr)) {
             Engine_PushError("Error reading file \"progress.bin\".",

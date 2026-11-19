@@ -71,8 +71,14 @@ static int ApplicationZuma_ShowStartupImage(Engine *engine) {
   if (!texDisc)
     return 10;
 
-  SDL_RenderCopy(engine->render, texDisc, NULL, NULL);
-  SDL_RenderPresent(engine->render);
+  /* Draw it on every screen buffer (phones use 2-3), always on black,
+     so no random pixels show in the side areas */
+  SDL_SetRenderDrawColor(engine->render, 0, 0, 0, 255);
+  for (int i = 0; i < 3; i++) {
+    SDL_RenderClear(engine->render);
+    SDL_RenderCopy(engine->render, texDisc, NULL, NULL);
+    SDL_RenderPresent(engine->render);
+  }
   SDL_Delay(2000);
   return 0;
 }
@@ -132,6 +138,7 @@ static void ApplicationZuma_HandleEvents(App *app, Engine *engine) {
 }
 
 static void ApplicationZuma_Update(LevelMgr *levelMgr, Engine *engine, App *app) {
+  SDL_SetRenderDrawColor(engine->render, 0, 0, 0, 255);
   SDL_RenderClear(engine->render);
 
   if (app->inMenu) {
@@ -198,6 +205,17 @@ int ApplicationZuma_Start(void) {
     ApplicationZuma_Update(&levelMgr, &engine, &app);
 
     Uint64 now = SDL_GetPerformanceCounter();
+
+    /* Screen already runs at 60 Hz: V-Sync gives perfectly even frames,
+       extra waiting would only add stutter. */
+    SDL_DisplayMode mode;
+    int displayIndex = SDL_GetWindowDisplayIndex(engine.win);
+    if (displayIndex >= 0 && SDL_GetCurrentDisplayMode(displayIndex, &mode) == 0 &&
+        mode.refresh_rate >= 58 && mode.refresh_rate <= 62) {
+      nextFrame = now + period;
+      continue;
+    }
+
     if (now < nextFrame) {
       Uint32 ms = (Uint32)((nextFrame - now) * 1000 / freq);
       if (ms > 1)
