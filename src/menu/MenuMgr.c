@@ -643,7 +643,7 @@ static void DialogueBox_LayoutOptions(Engine *engine, DialogueBox* db) {
         return;
 
     bool ar = Lang_Get() == LANG_AR;
-    const int btnW = 120, gap = -10, labelGap = 10;   /* short buttons (xscale 0) */
+    const int btnW = 180, gap = -10, labelGap = 10;   /* buttons with xscale 1 */
     int left  = db->pos.x + DB_OPTIONS_LABEL_X;       /* English labels start here */
     int right = db->pos.x - DB_OPTIONS_LABEL_X;       /* Arabic labels end here */
 
@@ -664,7 +664,7 @@ static void DialogueBox_LayoutOptions(Engine *engine, DialogueBox* db) {
     Button* en = &db->buttons[db->langBtn];
     Button* arb = &db->buttons[db->langBtn + 1];
     /* Kufi words are wider: smaller so they fit the short buttons */
-    en->textScale = arb->textScale = ar ? 0.6f : 0.8f;
+    en->textScale = arb->textScale = ar ? 0.75f : 0.95f;
     if (ar) {
         /* [ENGLISH][ARABIC] LANGUAGE  (mirror of the English row) */
         arb->pos.x = lab->pos.x - labelGap - btnW;
@@ -751,7 +751,7 @@ DialogueBox* DialogueBox_CreateOptions(Engine *engine) {
         Button b;
         Button_Init(&b);
         Button_SetText(&b, langs[i]);
-        b.xscale = 0;  /* short button: 120 px */
+        b.xscale = 1;  /* 180 px */
         b.textScale = 0.8f;
         b.pos.x = 0;   /* placed by DialogueBox_LayoutOptions */
         b.pos.y = slSnd.pos.y + 52;

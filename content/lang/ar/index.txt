@@ -54,7 +54,7 @@ C	Mirror Serpent	052.png	421	171	104	54
 C	Mouth of Centeotl	053.png	457	171	104	54
 C	Mud Slide	054.png	485	171	104	54
 C	Osprey Talon	055.png	437	171	104	54
-C	Riverbed Mosaic	056.png	605	171	104	54
+C	Riverbed Mosaic	056.png	606	171	104	54
 C	Rorschach	057.png	367	171	104	54
 C	Sand Garden	058.png	434	171	104	54
 C	Shrine of Quetzalcoatl	059.png	601	171	104	54

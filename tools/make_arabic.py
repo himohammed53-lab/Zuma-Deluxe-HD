@@ -52,9 +52,9 @@ def main():
         ab = font.getbbox('ا', direction='rtl')
         alef_h = ab[3] - ab[1]
 
-        tmp = Image.new('LA', (SIZE * len(ar) + 200, H), (0, 0))
+        tmp = Image.new('LA', (SIZE * len(ar) + 400, H), (0, 0))
         d = ImageDraw.Draw(tmp)
-        d.text((pad, pad + ascent), ar, font=font, anchor='ls', direction='rtl',
+        d.text((pad + 100, pad + ascent), ar, font=font, anchor='ls', direction='rtl',
                fill=(255, 255), stroke_width=STROKE, stroke_fill=(40, 255))
         bbox = tmp.getbbox()
         x0, x1 = bbox[0], bbox[2]

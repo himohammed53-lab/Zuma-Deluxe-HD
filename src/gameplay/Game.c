@@ -809,8 +809,16 @@ void Game_DrawIntro(Engine *engine, Game* game) {
     Engine_DrawTextExtScale(engine, buff, FONT_NATIVE_ALIEN_EXT_16, game->subHeaderFontScale, color, false, true, 
         WINDOW_WIDTH - 250, WINDOW_HEIGHT - 95);
 
-    sprintf(buff, "LEVEL %d-%d", game->lvlID + 1, game->difficulty + 1);
+    if (Lang_Get() == LANG_AR)
+        sprintf(buff, "LEVEL %d - %d", game->lvlID + 1, game->difficulty + 1);
+    else
+        sprintf(buff, "LEVEL %d-%d", game->lvlID + 1, game->difficulty + 1);
+    /* keep the whole title on the screen (Arabic is wider) */
+    float hx = WINDOW_WIDTH - 250;
+    int hw = (int)(Engine_GetTextWidth(engine, buff, FONT_NATIVE_ALIEN_48) * game->headerFontScale);
+    if (hx + hw / 2 > WINDOW_WIDTH - 30)
+        hx = WINDOW_WIDTH - 30 - hw / 2;
     Engine_DrawTextExtScale(engine, buff, FONT_NATIVE_ALIEN_48, game->headerFontScale, color, false, true, 
-        WINDOW_WIDTH - 250, WINDOW_HEIGHT - 200);
+        hx, WINDOW_HEIGHT - 200);
     return;
 }

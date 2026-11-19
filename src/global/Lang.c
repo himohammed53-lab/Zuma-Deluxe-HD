@@ -158,10 +158,11 @@ static LangText* Lang_Find(const char* str, const char** rest) {
 static float Lang_Zoom(Engine* engine, LangText* t, int fontID, float scale) {
     int f = (fontID >= 0 && fontID < LANG_FONTS) ? fontID : 1;
     float capH = s_capH[f] * engine->scale_y * scale;
-    bool small = capH < 25;
+    bool small = s_capH[f] * engine->scale_y < 25;   /* by the font, not the zoom */
     /* Kufi letters are short: bigger, above all on the small button text.
        The clear font is tall: same size as the English letters. */
-    float size = (t->style == 'K') ? (small ? 1.7f : 1.25f) : (small ? 1.0f : 1.1f);
+    bool big = s_capH[f] > 50;   /* the huge LEVEL title in the game */
+    float size = (t->style == 'K') ? (small ? 1.7f : 0.95f) : (small ? 1.0f : (big ? 0.42f : 1.1f));
     if (t->style != 'K' && fontID == FONT_CANCUN_12)
         size = 0.72f;   /* results window: rows close together */
     return capH * size / (t->alefH > 0 ? t->alefH : 1);
