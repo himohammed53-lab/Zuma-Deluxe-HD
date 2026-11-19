@@ -140,7 +140,7 @@ static void ApplicationZuma_Update(LevelMgr *levelMgr, Engine *engine, App *app)
   SDL_RenderClear(engine->render);
 
   if (app->inMenu) {
-    MenuMgr_Update(engine, &app->menuMgr);
+    MenuMgr_Update(levelMgr, engine, &app->menuMgr);
 
     if (app->menuMgr.roomID == MR_GAME && app->inMenu) {
       app->inMenu = 0;

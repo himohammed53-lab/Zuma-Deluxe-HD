@@ -1103,7 +1103,7 @@ void MenuMgr_Set(Engine *engine, MenuMgr* m, int room) {
 }
 
 
-void MenuMgr_Update(Engine *engine, MenuMgr* m) {
+void MenuMgr_Update(LevelMgr *levelMgr, Engine *engine, MenuMgr* m) {
     if (!m)
         return;
     
@@ -1125,7 +1125,10 @@ void MenuMgr_Update(Engine *engine, MenuMgr* m) {
         switch(Menu_GetButton(m->room)) {
             case 1: MenuMgr_Set(engine, m, MR_MAIN); return; break;
             case 2: (*m->curLvl)--; break;
-            case 3: MenuMgr_Set(engine, m, MR_GAME); Engine_StopMusic(engine); return; break;
+            case 3:
+                if (!LevelMgr_IsLevelUnlocked(levelMgr, *m->curLvl))
+                    break; /* locked: win the level before it first */
+                MenuMgr_Set(engine, m, MR_GAME); Engine_StopMusic(engine); return; break;
             case 4: (*m->curLvl)++; break;
 
             case 5: (*m->curDiff) = 0; break;
@@ -1164,8 +1167,23 @@ void MenuMgr_Draw(LevelMgr *levelMgr, Engine *engine, MenuMgr* m) {
     if (m->roomID == MR_GAME) 
         return;
 
-    if (m->roomID == MR_GAUNTLET)
+    if (m->roomID == MR_GAUNTLET) {
+        bool locked = !LevelMgr_IsLevelUnlocked(levelMgr, *m->curLvl);
+        SDL_Texture* thumb = Engine_GetTextureSDL(engine, 4+(*m->curLvl));
+
+        if (locked && thumb)
+            SDL_SetTextureColorMod(thumb, 70, 70, 70);
+
         Engine_DrawTexture(engine, 4+(*m->curLvl), WINDOW_WIDTH / 2+16, 500);
+
+        if (locked && thumb) {
+            SDL_SetTextureColorMod(thumb, 255, 255, 255);
+
+            SDL_Color color = {255, 210, 0, 255};
+            Engine_DrawTextExt(engine, "LOCKED", FONT_NATIVE_ALIEN_48, color,
+                true, true, WINDOW_WIDTH / 2+16, 476);
+        }
+    }
     
     Menu_Draw(engine, m->room);
     if (m->dbOptions)

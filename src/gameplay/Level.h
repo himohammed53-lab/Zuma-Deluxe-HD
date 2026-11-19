@@ -93,6 +93,9 @@ void Level_Free(Level*);
 int LevelMgr_LoadLevels(LevelMgr *levelMgr, const char*);
 int LevelMgr_SaveProgress(LevelMgr *levelMgr);
 int LevelMgr_LoadProgress(LevelMgr *levelMgr);
+/* Level 1 is always open; every next level opens after the one
+   before it has been won (on any difficulty), like the original Zuma. */
+bool LevelMgr_IsLevelUnlocked(LevelMgr *levelMgr, int lvl);
 Stage* LevelMgr_GetStage(LevelMgr *levelMgr, int stageID);
 Level* LevelMgr_GetLevelFromStage(LevelMgr *levelMgr, int stageID, int lvID);
 LevelGraphics* LevelMgr_GetLevelGraphics(LevelMgr *levelMgr, Level* lv);

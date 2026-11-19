@@ -285,6 +285,20 @@ int LevelMgr_LoadLevels(LevelMgr *levelMgr, const char* fileName) {
     return 1;
 }
 
+bool LevelMgr_IsLevelUnlocked(LevelMgr *levelMgr, int lvl) {
+    if (lvl <= 0)
+        return true;
+    if (lvl >= LEVELS_COUNT)
+        return false;
+
+    for (int j = 0; j < 4; j++) {
+        /* bestTime is only saved when a level is won */
+        if (levelMgr->bestTime[lvl - 1][j] != 0 || levelMgr->bestTime[lvl][j] != 0)
+            return true;
+    }
+    return false;
+}
+
 int LevelMgr_SaveProgress(LevelMgr *levelMgr) {
     FILE* file = fopen("progress.bin", "wb");
     if (!file) {
