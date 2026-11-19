@@ -1036,10 +1036,16 @@ void Menu_Draw(Engine *engine, Menu* menu) {
             menu->trBgSky.h
         };
 
-        SDL_RenderCopy(engine->render, tex, &menu->trBgSky, &dtrSky);
+        /* leave out the 2 outer columns of the sky picture: they are dark
+           and showed as a black line moving across the sky */
+        SDL_Rect srcSky = menu->trBgSky;
+        srcSky.x += 2;
+        srcSky.w -= 4;
+
+        SDL_RenderCopy(engine->render, tex, &srcSky, &dtrSky);
 
         dtrSky.x = skyPos-1279;
-        SDL_RenderCopy(engine->render, tex, &menu->trBgSky, &dtrSky);
+        SDL_RenderCopy(engine->render, tex, &srcSky, &dtrSky);
     }
 
     SDL_Rect dtrBg = {0, 0, 1280, 720};

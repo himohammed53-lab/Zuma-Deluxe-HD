@@ -266,7 +266,7 @@ def _paint_state(reg, style, text, lines, ref_mask=None, ref_box=None, seed=0):
     else:
         if style == 'embossed':
             a_fit = fit(a_src, bw * 0.85, bh * 0.92, style)
-            cx, cy = (bx0 + bx1) / 2, (by0 + by1) / 2
+            cx, cy = (bx0 + bx1) / 2, h * 0.47   # middle of the plank face
         else:
             body = body_box.get(text)
             bx0b, bx1b = (body[0] * w, body[1] * w) if body else (bx0, bx1)
