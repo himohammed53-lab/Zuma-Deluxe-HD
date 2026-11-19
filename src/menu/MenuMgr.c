@@ -680,7 +680,7 @@ DialogueBox* DialogueBox_CreateOptions(Engine *engine) {
        "LANGUAGE" and "ARABIC" are always shown in Arabic too. */
     DialogueBoxText tLang;
     DialogueBoxText_Init(&tLang);
-    tLang.pos.x = -250;
+    tLang.pos.x = -258;
     tLang.pos.y = slSnd.pos.y + 70;
     strcpy(tLang.str, "LANGUAGE");
     DialogueBox_AddText(db, &tLang);
@@ -700,7 +700,9 @@ DialogueBox* DialogueBox_CreateOptions(Engine *engine) {
         Button b;
         Button_Init(&b);
         Button_SetText(&b, langs[i]);
-        b.pos.x = -110 + i * 200;
+        /* right after the word LANGUAGE (its width depends on the language) */
+        int labelW = Engine_GetTextWidth(engine, "LANGUAGE", FONT_CANCUN_10);
+        b.pos.x = -258 + labelW + 18 + i * 190;
         b.pos.y = slSnd.pos.y + 52;
         b.pressed = (Lang_Get() == (i == 0 ? LANG_EN : LANG_AR));
         DialogueBox_AddButton(db, &b);
