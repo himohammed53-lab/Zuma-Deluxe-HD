@@ -162,6 +162,8 @@ static float Lang_Zoom(Engine* engine, LangText* t, int fontID, float scale) {
     /* Kufi letters are short: bigger, above all on the small button text.
        The clear font is tall: same size as the English letters. */
     float size = (t->style == 'K') ? (small ? 1.7f : 1.25f) : (small ? 1.0f : 1.1f);
+    if (t->style != 'K' && fontID == FONT_CANCUN_12)
+        size = 0.72f;   /* results window: rows close together */
     return capH * size / (t->alefH > 0 ? t->alefH : 1);
 }
 
