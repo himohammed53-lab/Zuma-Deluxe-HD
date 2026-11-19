@@ -771,10 +771,10 @@ DialogueBox* DialogueBox_CreateResults(bool hasNextLevel) {
         DialogueBox_AddText(db, &tParam[i]);
     }
 
-    // Buttons: OK (back to the levels) and NEXT LEVEL
+    // Buttons: MAIN MENU (left) and NEXT level (right)
     Button bOk;
     Button_Init(&bOk);
-    Button_SetText(&bOk, "OK");
+    Button_SetText(&bOk, "MAIN MENU");
     bOk.xscale = hasNextLevel ? 3 : 8;
     bOk.pos.x = -297;
     bOk.pos.y = 120;
@@ -783,7 +783,7 @@ DialogueBox* DialogueBox_CreateResults(bool hasNextLevel) {
     if (hasNextLevel) {
         Button bNext;
         Button_Init(&bNext);
-        Button_SetText(&bNext, "NEXT LEVEL");
+        Button_SetText(&bNext, "NEXT");
         bNext.xscale = 3;
         bNext.pos.x = -297 + 300;
         bNext.pos.y = 120;

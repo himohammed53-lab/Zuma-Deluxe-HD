@@ -186,7 +186,8 @@ static void ApplicationZuma_Update(LevelMgr *levelMgr, Engine *engine, App *app)
         }
       }
 
-      MenuMgr_Set(engine, &app->menuMgr, MR_GAUNTLET);
+      /* MAIN MENU in the results window goes to the main menu */
+      MenuMgr_Set(engine, &app->menuMgr, won ? MR_MAIN : MR_GAUNTLET);
       return;
     }
 
