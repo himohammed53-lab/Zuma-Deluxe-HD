@@ -1472,7 +1472,7 @@ void MenuMgr_Update(LevelMgr *levelMgr, Engine *engine, MenuMgr* m) {
     if (m->roomID == MR_MAIN && !m->inDialog) {
         switch(Menu_GetButton(m->room)) {
             case 1: MenuMgr_Set(engine, m, MR_GAUNTLET); break;
-            case 2:   /* this stone (was GAUNTLET, did nothing) = PLAYERS */
+            case 2:   /* this stone (was GAUNTLET, did nothing) = ACCOUNTS */
                 m->selSlot = m->profiles.current;
                 m->dbPlayers = MenuMgr_CreatePlayersDialog(m);
                 m->inDialog = true;
@@ -1575,11 +1575,11 @@ void MenuMgr_Draw(LevelMgr *levelMgr, Engine *engine, MenuMgr* m) {
 
         MenuMgr_DrawWelcome(engine, m);
 
-        /* label of the PLAYERS stone (its old text was erased in menu.png) */
+        /* label of the ACCOUNTS stone (its old text was erased in menu.png) */
         Button* bp = &m->room->buttons[1];
         int press = (bp->state == BTN_CLICKED) ? 2 : 0;
-        SDL_Color gold = {255, 205, 90, 255};
-        Engine_DrawTextExtScale(engine, "PLAYERS", FONT_NATIVE_ALIEN_48, 0.52f, gold,
+        SDL_Color gold = {226, 209, 245, 255};   /* matches the painted letters */
+        Engine_DrawTextExtScale(engine, "ACCOUNTS", FONT_NATIVE_ALIEN_48, 0.48f, gold,
             false, true, bp->pos.x + bp->tRect.w / 2 - 6 + press, bp->pos.y + 20 + press);
 
 
