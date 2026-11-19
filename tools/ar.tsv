@@ -27,7 +27,8 @@ C	MUSIC VOLUME	صوت الموسيقى
 C	SOUNDS VOLUME	صوت المؤثرات
 C	FULLSCREEN	ملء الشاشة
 C	LANGUAGE	اللغة
-A	ARABIC	العربية
+K	ENGLISH	الإنجليزية
+K	ARABIC	العربية
 C	POINTS	النقاط
 C	COMBOS	التتابعات
 C	COINS	العملات

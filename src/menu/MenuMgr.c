@@ -23,6 +23,7 @@ void Button_Init(Button* btn) {
     btn->tRect.h = 72;
 
     btn->xscale = 1;
+    btn->textScale = 1.0f;
 
     btn->pos.x = 0;
     btn->pos.y = 0;
@@ -148,15 +149,16 @@ void Button_Draw(Engine *engine, Button* btn) {
         }
 
         Lang_SetButtonStyle(true);
-        Engine_DrawTextExt(
+        Engine_DrawTextExtScale(
             engine, 
             btn->text,
             FONT_CANCUN_10,
+            btn->textScale,
             color,
             true,
             true,
             cx + dx,
-            btn->pos.y + 18 + dy
+            btn->pos.y + 18 + (1.0f - btn->textScale) * 14 + dy
         );
         Lang_SetButtonStyle(false);
     }
@@ -631,27 +633,45 @@ void DialogueBox_Destroy(DialogueBox* db) {
 /* Word + two language buttons, centred in the window.
    English: LANGUAGE [ENGLISH][ARABIC]   Arabic: [ENGLISH][ARABIC] (word) */
 #define DB_OPTIONS_LABEL_X (-56 - 170)   /* left edge of MUSIC / SOUNDS VOLUME */
+#define DB_OPTIONS_SLIDER_X (-56)
 
-static void DialogueBox_LayoutLanguage(Engine *engine, DialogueBox* db) {
+/* Places the options window's labels, sliders and language buttons.
+   English: labels on the left, sliders on the right.
+   Arabic: the same, mirrored (labels on the right, right-aligned). */
+static void DialogueBox_LayoutOptions(Engine *engine, DialogueBox* db) {
     if (db->langBtn <= 0 || db->buttonsLen < db->langBtn + 2)
         return;
 
-    int labelW = Engine_GetTextWidth(engine, "LANGUAGE", FONT_CANCUN_10);
-    const int btnW = 120, gap = -10, labelGap = 10;  /* small buttons (xscale 0); their picture has empty edges */
+    bool ar = Lang_Get() == LANG_AR;
+    const int btnW = 120, gap = -10, labelGap = 10;   /* short buttons (xscale 0) */
+    int left  = db->pos.x + DB_OPTIONS_LABEL_X;       /* English labels start here */
+    int right = db->pos.x - DB_OPTIONS_LABEL_X;       /* Arabic labels end here */
 
-    if (Lang_Get() == LANG_AR) {
-        /* [ENGLISH][ARABIC] word, centred */
-        int groupW = labelW + labelGap + 2 * btnW + gap;
-        int startX = db->pos.x - groupW / 2;
-        db->buttons[db->langBtn].pos.x     = startX;
-        db->buttons[db->langBtn + 1].pos.x = startX + btnW + gap;
-        db->texts[db->langLabel].pos.x     = startX + 2 * btnW + gap + labelGap;
+    for (int i = 0; i < db->slidersLen && i < 2; i++)
+        db->sliders[i].pos.x = ar ? db->pos.x - DB_OPTIONS_SLIDER_X - SLIDER_WIDTH
+                                  : db->pos.x + DB_OPTIONS_SLIDER_X;
+
+    /* the texts of the two sliders and the LANGUAGE word */
+    int ids[3] = { 0, 1, db->langLabel };
+    for (int k = 0; k < 3; k++) {
+        DialogueBoxText* t = &db->texts[ids[k]];
+        int w = Engine_GetTextWidth(engine, t->str, t->FontID);
+        t->pos.x = ar ? right - w : left;
+    }
+
+    DialogueBoxText* lab = &db->texts[db->langLabel];
+    int labelW = Engine_GetTextWidth(engine, lab->str, lab->FontID);
+    Button* en = &db->buttons[db->langBtn];
+    Button* arb = &db->buttons[db->langBtn + 1];
+    /* Kufi words are wider: smaller so they fit the short buttons */
+    en->textScale = arb->textScale = ar ? 0.6f : 0.8f;
+    if (ar) {
+        /* [ENGLISH][ARABIC] LANGUAGE  (mirror of the English row) */
+        arb->pos.x = lab->pos.x - labelGap - btnW;
+        en->pos.x  = arb->pos.x - gap - btnW;
     } else {
-        /* LANGUAGE under MUSIC / SOUNDS (same left edge), buttons after it */
-        int startX = db->pos.x + DB_OPTIONS_LABEL_X;
-        db->texts[db->langLabel].pos.x     = startX;
-        db->buttons[db->langBtn].pos.x     = startX + labelW + labelGap;
-        db->buttons[db->langBtn + 1].pos.x = startX + labelW + labelGap + btnW + gap;
+        en->pos.x  = left + labelW + labelGap;
+        arb->pos.x = en->pos.x + btnW + gap;
     }
 }
 
@@ -732,12 +752,13 @@ DialogueBox* DialogueBox_CreateOptions(Engine *engine) {
         Button_Init(&b);
         Button_SetText(&b, langs[i]);
         b.xscale = 0;  /* short button: 120 px */
-        b.pos.x = 0;   /* placed by DialogueBox_LayoutLanguage */
+        b.textScale = 0.8f;
+        b.pos.x = 0;   /* placed by DialogueBox_LayoutOptions */
         b.pos.y = slSnd.pos.y + 52;
         b.pressed = (Lang_Get() == (i == 0 ? LANG_EN : LANG_AR));
         DialogueBox_AddButton(db, &b);
     }
-    DialogueBox_LayoutLanguage(engine, db);
+    DialogueBox_LayoutOptions(engine, db);
 
     return db;
 }
@@ -751,7 +772,7 @@ void DialogueBox_UpdateOptions(Engine *engine, DialogueBox* db) {
             if (Button_IsClicked(&db->buttons[db->langBtn + i])) {
                 Lang_Set(i == 0 ? LANG_EN : LANG_AR);
                 Engine_SaveSettings(engine);
-                DialogueBox_LayoutLanguage(engine, db);
+                DialogueBox_LayoutOptions(engine, db);
             }
         }
         db->buttons[db->langBtn].pressed     = (Lang_Get() == LANG_EN);

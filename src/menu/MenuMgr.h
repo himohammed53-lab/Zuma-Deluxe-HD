@@ -36,6 +36,8 @@ typedef struct _Button {
 
     int textureID;
 
+    float textScale;   /* size of the button text, 1 = normal */
+
     char text[32];
 } Button;
 
