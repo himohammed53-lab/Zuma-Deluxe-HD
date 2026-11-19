@@ -961,12 +961,12 @@ DialogueBox* DialogueBox_CreateGameOver() {
     }
 
     // Button
-    /* TRY AGAIN (left) and LEAVE (right) */
+    /* LEAVE (left) and TRY AGAIN (right); TRY AGAIN stays button 1 */
     Button bRetry;
     Button_Init(&bRetry);
     Button_SetText(&bRetry, "TRY AGAIN");
     bRetry.xscale = 3;
-    bRetry.pos.x = -297;
+    bRetry.pos.x = -297 + 300;   /* right */
     bRetry.pos.y = 120;
     DialogueBox_AddButton(db, &bRetry);
 
@@ -974,7 +974,7 @@ DialogueBox* DialogueBox_CreateGameOver() {
     Button_Init(&bLeave);
     Button_SetText(&bLeave, "LEAVE");
     bLeave.xscale = 3;
-    bLeave.pos.x = -297 + 300;
+    bLeave.pos.x = -297;         /* left */
     bLeave.pos.y = 120;
     DialogueBox_AddButton(db, &bLeave);
 
