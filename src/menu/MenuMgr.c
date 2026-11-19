@@ -1575,13 +1575,6 @@ void MenuMgr_Draw(LevelMgr *levelMgr, Engine *engine, MenuMgr* m) {
 
         MenuMgr_DrawWelcome(engine, m);
 
-        /* label of the ACCOUNTS stone (its old text was erased in menu.png) */
-        Button* bp = &m->room->buttons[1];
-        int press = (bp->state == BTN_CLICKED) ? 2 : 0;
-        SDL_Color gold = {226, 209, 245, 255};   /* matches the painted letters */
-        Engine_DrawTextExtScale(engine, "ACCOUNTS", FONT_NATIVE_ALIEN_48, 0.48f, gold,
-            false, true, bp->pos.x + bp->tRect.w / 2 - 6 + press, bp->pos.y + 20 + press);
-
 
     } else if (m->roomID == MR_GAUNTLET) {
         char buff[32];
