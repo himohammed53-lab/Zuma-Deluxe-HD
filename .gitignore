@@ -11,3 +11,10 @@ Makefile
 
 build/
 .cache/
+# Android
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+android/app/.cxx/
+!thirdparty/libopenmpt/CMakeLists.txt

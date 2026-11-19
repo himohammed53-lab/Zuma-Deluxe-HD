@@ -246,7 +246,7 @@ int LevelMgr_LoadLevels(LevelMgr *levelMgr, const char* fileName) {
     int done;
 
     char path[256];
-    char* basePath = SDL_GetBasePath();
+    char* basePath = Engine_GetBasePath();
     sprintf(path, "%s%s/%s", basePath, PATH_LEVEL, fileName);
     SDL_free(basePath);
 
@@ -402,7 +402,7 @@ int Level_Load(LevelMgr *levelMgr, Engine *engine, Level* level) {
 
     char path[256];
 
-    char* basePath = SDL_GetBasePath();
+    char* basePath = Engine_GetBasePath();
 
     sprintf(
         path, 

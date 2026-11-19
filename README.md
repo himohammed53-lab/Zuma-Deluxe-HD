@@ -20,6 +20,22 @@ A remake of the legendary 2003 PopCap game with improved textures and support fo
 > On every platform, music (`zuma.mo3`) is played as is by [libopenmpt](https://lib.openmpt.org/libopenmpt/).
 > Sound effects use miniaudio + libvorbis, everything is played through SDL. See [#18](https://github.com/GalaxyShad/Zuma-Deluxe-HD/issues/18).
 
+## Android version (this fork)
+Zuma HD running on Android phones: 60 FPS, touch controls.
+
+* **Aim:** keep your finger on the screen and move it, the frog follows it (like the mouse).
+* **Shoot:** lift your finger, or just tap anywhere - the frog shoots at that spot.
+* **Swap balls:** tap the frog.
+
+The APK is built automatically by GitHub Actions (`Actions` tab -> `Android APK` -> `ZumaHD-APK`).
+It is for personal use only: the game graphics, sounds and music belong to PopCap and EA.
+
+**Project Owner & Creator:** Muhamed Alzarqi  
+**AI Programming Assistant:** Claude (Anthropic)  
+*Created through human-AI collaboration*
+
+Original Zuma Deluxe HD remake by [GalaxyShad](https://github.com/GalaxyShad) and [s4lat](https://github.com/s4lat).
+
 ## Gameplay video on YouTube
 [![Gameplay video](https://img.youtube.com/vi/VZYsNUUAozM/0.jpg)](https://www.youtube.com/watch?v=VZYsNUUAozM)
 

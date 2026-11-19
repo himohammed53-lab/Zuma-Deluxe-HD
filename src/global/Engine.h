@@ -110,6 +110,18 @@ void Engine_StopSoundSfx(Engine*, int);
 
 void Engine_GetMousePos(Engine *engine, int* mx, int* my);
 
+/* Pointer (mouse / touch) state, updated by the app event loop.
+   A press is always visible for at least one frame, so a quick tap
+   on a phone still clicks menu buttons. */
+void Engine_InputBeginFrame(void);
+void Engine_InputPointerDown(void);
+void Engine_InputPointerUp(void);
+bool Engine_IsMouseDown(void);
+
+/* Folder with the game content (images, sounds, levels...).
+   Returned string must be freed with SDL_free(). */
+char* Engine_GetBasePath(void);
+
 int Engine_SaveSettings(Engine *engine);
 int Engine_LoadSettings(Engine *engine);
 

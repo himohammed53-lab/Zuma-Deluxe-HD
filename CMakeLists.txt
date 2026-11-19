@@ -38,11 +38,21 @@ FILE(GLOB_RECURSE SOURCES RELATIVE ${PROJECT_SOURCE_DIR} "src/*.c")
 
 set(MINIAUDIO_LIBVORBIS_DIR "${PROJECT_SOURCE_DIR}/thirdparty/miniaudio/extras/decoders/libvorbis")
 
-add_executable(
-    ZumaHD
-    ${SOURCES}
-    "${MINIAUDIO_LIBVORBIS_DIR}/miniaudio_libvorbis.c"
-)
+if(ANDROID)
+    # Android: SDL's Java activity loads the game from libmain.so
+    add_library(
+        ZumaHD SHARED
+        ${SOURCES}
+        "${MINIAUDIO_LIBVORBIS_DIR}/miniaudio_libvorbis.c"
+    )
+    set_target_properties(ZumaHD PROPERTIES OUTPUT_NAME main)
+else()
+    add_executable(
+        ZumaHD
+        ${SOURCES}
+        "${MINIAUDIO_LIBVORBIS_DIR}/miniaudio_libvorbis.c"
+    )
+endif()
 
 target_include_directories(
     ZumaHD PUBLIC
@@ -71,16 +81,20 @@ target_compile_definitions(
 )
 
 # miniaudio backend deps (Windows/macOS need nothing extra)
-if(UNIX AND NOT APPLE)
+if(ANDROID)
+    target_link_libraries(ZumaHD PRIVATE m log android ${CMAKE_DL_LIBS})
+elseif(UNIX AND NOT APPLE)
     find_package(Threads REQUIRED)
     target_link_libraries(ZumaHD PRIVATE Threads::Threads m ${CMAKE_DL_LIBS})
 endif()
 
-# copy assets
+# copy assets (on Android Gradle packs them into the APK instead)
+if(NOT ANDROID)
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_CURRENT_SOURCE_DIR}/content
     $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+endif()
 
 # SDL2 links with /NODEFAULTLIB, so MSVC /RTC checks must be off (CMP0184 moved them out of CMAKE_C_FLAGS_DEBUG)
 set_target_properties(SDL2 PROPERTIES MSVC_RUNTIME_CHECKS "")

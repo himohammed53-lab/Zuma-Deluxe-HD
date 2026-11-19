@@ -176,7 +176,7 @@ int Engine_TexturesLoad(Engine *engine, const char** files, int n) {
         return 0;
     }
 
-    char* basePath = SDL_GetBasePath();
+    char* basePath = Engine_GetBasePath();
 
     char path[256];
     for (int i = 0; i < n; i++) {
@@ -227,7 +227,7 @@ Font* Engine_FontLoad(Engine *engine, const char* fileName) {
 
     char path[256];
 
-    char* basePath = SDL_GetBasePath();
+    char* basePath = Engine_GetBasePath();
 
     sprintf(path, "%s%s/%s.png", basePath, FONT_FOLDER, fileName);
     font->texture = Engine_TextureLoad(engine, path);
@@ -566,7 +566,7 @@ void Engine_DrawTextExtScale(Engine *engine, const char* str, int fontID, float 
 // ==== Sound And Music ==== //
 
 static void Engine_GetContentFolder(char* out, size_t outSize, const char* folder) {
-    char* basePath = SDL_GetBasePath();
+    char* basePath = Engine_GetBasePath();
     SDL_snprintf(out, outSize, "%s%s", basePath ? basePath : "", folder);
     SDL_free(basePath);
 }
@@ -634,16 +634,57 @@ void Engine_UpdateMusicVolume(Engine *engine) {
 /* ==== Misc ==== */
 
 void Engine_GetMousePos(Engine *engine, int* mx, int* my) {
-    int wWidth, wHeight;
     int _mx, _my;
+    float lx, ly;
 
-    SDL_GetMouseState(&_mx, & _my);
-    SDL_GetWindowSize(engine->win, &wWidth, &wHeight);
-    _mx /= wWidth / WINDOW_WIDTH;
-    _my /= wHeight / WINDOW_HEIGHT;
+    SDL_GetMouseState(&_mx, &_my);
+    /* Window -> game (1280x720) coordinates, black bars included */
+    SDL_RenderWindowToLogical(engine->render, _mx, _my, &lx, &ly);
 
-    *mx = _mx;
-    *my = _my;
+    *mx = (int)lx;
+    *my = (int)ly;
+}
+
+static bool s_pointerDown = false;
+static bool s_pressedThisFrame = false;
+static bool s_releasePending = false;
+
+void Engine_InputBeginFrame(void) {
+    s_pressedThisFrame = false;
+    if (s_releasePending) {
+        s_pointerDown = false;
+        s_releasePending = false;
+    }
+}
+
+void Engine_InputPointerDown(void) {
+    s_pointerDown = true;
+    s_pressedThisFrame = true;
+    s_releasePending = false;
+}
+
+void Engine_InputPointerUp(void) {
+    if (s_pressedThisFrame)
+        s_releasePending = true; /* keep it "down" for this frame */
+    else
+        s_pointerDown = false;
+}
+
+bool Engine_IsMouseDown(void) {
+    return s_pointerDown;
+}
+
+char* Engine_GetBasePath(void) {
+#ifdef __ANDROID__
+    /* ZumaActivity copies the APK assets here on first start */
+    const char* dir = SDL_AndroidGetInternalStoragePath();
+    size_t len = SDL_strlen(dir) + 2;
+    char* path = SDL_malloc(len);
+    SDL_snprintf(path, len, "%s/", dir);
+    return path;
+#else
+    return SDL_GetBasePath();
+#endif
 }
 
 int randInt(const int min, const int max) {

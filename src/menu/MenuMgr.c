@@ -44,7 +44,7 @@ void Button_Update(Engine *engine, Button* btn) {
         my > btn->pos.y + btn->deadBorder &&
         mx < btn->pos.x+bWidth - btn->deadBorder &&
         my < btn->pos.y+btn->tRect.h - btn->deadBorder) {
-            if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_LEFT)) {
+            if (Engine_IsMouseDown()) {
                 if (btn->state != BTN_CLICKED) {
                     btn->state = BTN_CLICKED;
                     Engine_PlaySound(engine, btn->soundClickID);
@@ -179,7 +179,7 @@ void CheckBox_Update(Engine *engine, CheckBox* cb) {
         my > cb->pos.y &&
         mx < cb->pos.x+CHECK_BOX_WIDTH &&
         my < cb->pos.y+CHECK_BOX_HEIGHT) {
-            if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_LEFT)) {
+            if (Engine_IsMouseDown()) {
                     if (!cb->clicked) {
                         Engine_PlaySound(engine, SND_BUTTON2);
                         cb->checked = !cb->checked;
@@ -251,8 +251,7 @@ void Slider_Update(Engine *engine, Slider* s) {
         my > s->pos.y &&
         mx < s->pos.x + s->thumbPos + SLIDER_THUMB_WIDTH &&
         my < s->pos.y+SLIDER_HEIGHT) {
-            if (SDL_GetMouseState(NULL, NULL) & 
-                SDL_BUTTON(SDL_BUTTON_LEFT)) {
+            if (Engine_IsMouseDown()) {
                     s->drag = true;
             } else {
                 s->drag = false;
@@ -260,8 +259,7 @@ void Slider_Update(Engine *engine, Slider* s) {
     }
 
     if (s->drag) {
-         if (!(SDL_GetMouseState(NULL, NULL) & 
-                SDL_BUTTON(SDL_BUTTON_LEFT)))
+         if (!Engine_IsMouseDown())
                     s->drag = false;
 
         s->thumbPos = mx - s->pos.x - SLIDER_THUMB_WIDTH / 2;
