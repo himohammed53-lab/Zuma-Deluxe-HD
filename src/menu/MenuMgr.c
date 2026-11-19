@@ -1450,8 +1450,24 @@ void MenuMgr_DrawWelcome(Engine *engine, MenuMgr* m) {
     SDL_Color white = {255, 255, 255, 255};
     /* Arabic: Kufi, a bit smaller so it sits nicely in the sky */
     bool ar = Lang_Get() == LANG_AR;
-    Engine_DrawTextExtScale(engine, "WELCOME TO ZUMA HD!", FONT_NATIVE_ALIEN_EXT_16,
-        ar ? 0.8f : 1.0f, white, false, true, 640, ar ? 6 : 0);
+    if (ar) {
+        Engine_DrawTextExtScale(engine, "WELCOME TO ZUMA HD!", FONT_NATIVE_ALIEN_EXT_16,
+            0.8f, white, false, true, 640, 6);
+        return;
+    }
+
+    /* English: the font's space is very wide, so put the words
+       closer together by hand */
+    const char* words[] = { "WELCOME", "TO", "ZUMA", "HD!" };
+    const int gap = 14;
+    int total = 0;
+    for (int i = 0; i < 4; i++)
+        total += Engine_GetTextWidth(engine, words[i], FONT_NATIVE_ALIEN_EXT_16) + (i ? gap : 0);
+    int x = 640 - total / 2;
+    for (int i = 0; i < 4; i++) {
+        Engine_DrawTextExt(engine, words[i], FONT_NATIVE_ALIEN_EXT_16, white, false, false, x, 0);
+        x += Engine_GetTextWidth(engine, words[i], FONT_NATIVE_ALIEN_EXT_16) + gap;
+    }
 }
 
 void MenuMgr_DrawProfiles(Engine *engine, MenuMgr* m) {
