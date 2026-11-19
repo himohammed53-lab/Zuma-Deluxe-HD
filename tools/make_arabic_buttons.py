@@ -78,6 +78,19 @@ body_box = {
     'القائمة': (0.05, 0.95),
 }
 
+# square stones: the face where the English words were, measured by hand
+# on the normal state (top-left, top-right, bottom-right, bottom-left)
+MANUAL_QUADS = {
+    'خروج':        [(18, 40), (130, 68), (130, 126), (18, 98)],
+    'ألعاب\nأخرى': [(26, 12), (134, 38), (134, 150), (26, 124)],
+}
+
+def quad_point(q, u, v):
+    """Point at (u, v) in 0..1 inside the quad q (bilinear)."""
+    tl, tr, br, bl = [np.array(p, np.float32) for p in q]
+    top = tl + (tr - tl) * u; bot = bl + (br - bl) * u
+    return top + (bot - top) * v
+
 def text_lines(m):
     """Top and bottom lines of the old letters (they follow the stone)."""
     xs, tops, bots = [], [], []
@@ -144,6 +157,10 @@ def gold_rows(rgb, m):
     return good, first
 
 def paint_state(reg, style, text, lines, ref_mask=None, ref_box=None, seed=0):
+    r = _paint_state(reg, style, text, lines, ref_mask, ref_box, seed)
+    return r
+
+def _paint_state(reg, style, text, lines, ref_mask=None, ref_box=None, seed=0):
     rgb = reg[:, :, :3].copy()
     h, w = rgb.shape[:2]
     # see-through pixels are black in the file: give them the plank colour
@@ -209,6 +226,28 @@ def paint_state(reg, style, text, lines, ref_mask=None, ref_box=None, seed=0):
         bot_l = lambda x, b0=b0: b0(x - dx) + dy
         bx0, bx1 = gx0 + dx, gx1 + dx
         bw = bx1 - bx0 + 1
+        if text in MANUAL_QUADS:
+            q = [(px + dx, py + dy) for px, py in MANUAL_QUADS[text]]
+            qw = np.mean([q[1][0] - q[0][0], q[2][0] - q[3][0]])
+            qh = np.mean([q[3][1] - q[0][1], q[2][1] - q[1][1]])
+            ar = a_src.shape[1] / a_src.shape[0]
+            # keep the word's shape inside the face
+            if ar > qw / qh:
+                uw, vh = 1.0, (qw / ar) / qh
+            else:
+                uw, vh = (qh * ar) / qw, 1.0
+            u0, v0 = (1 - uw) / 2, (1 - vh) / 2
+            dst = np.float32([quad_point(q, u0, v0), quad_point(q, u0 + uw, v0),
+                              quad_point(q, u0 + uw, v0 + vh), quad_point(q, u0, v0 + vh)])
+            sh, sw = a_src.shape
+            P = cv2.getPerspectiveTransform(np.float32([[0, 0], [sw, 0], [sw, sh], [0, sh]]), dst)
+            small = cv2.resize(a_src, (max(1, int(np.ptp(dst[:, 0]) * 2)), max(1, int(np.ptp(dst[:, 0]) * 2 * a_src.shape[0] / a_src.shape[1]))), interpolation=cv2.INTER_AREA)
+            sh2, sw2 = small.shape
+            P = cv2.getPerspectiveTransform(np.float32([[0, 0], [sw2, 0], [sw2, sh2], [0, sh2]]), dst)
+            a = cv2.warpPerspective(small, P, (w, h), flags=cv2.INTER_LINEAR)
+            gy, th = int(dst[:, 1].min()), int(dst[:, 1].max() - dst[:, 1].min())
+            a = np.clip(a * 1.2, 0, 1)
+            return finish(reg, out, a, gy, th, good, outline, style, h, w), m, box
         hav = np.mean([bot_l(x) - top_l(x) for x in (bx0, bx1)])
         ar = a_src.shape[1] / a_src.shape[0]
         tw = min(bw * 1.0, hav * 1.3 * ar)
@@ -238,7 +277,9 @@ def paint_state(reg, style, text, lines, ref_mask=None, ref_box=None, seed=0):
         gx = max(0, min(w - tw, gx)); gy = max(0, min(h - th, gy))
         a[gy:gy + th, gx:gx + tw] = a_fit
     a = np.clip(a * 1.2, 0, 1)
+    return finish(reg, out, a, gy, th, good, outline, style, h, w), m, box
 
+def finish(reg, out, a, gy, th, good, outline, style, h, w):
     # letter colours: same gradient as the English letters had
     grad = np.zeros((h, 3), np.float32)
     for y in range(h):
@@ -273,7 +314,7 @@ def paint_state(reg, style, text, lines, ref_mask=None, ref_box=None, seed=0):
 
     res = reg.copy()
     res[:, :, :3] = np.clip(out, 0, 255).astype(np.uint8)
-    return res, m, box
+    return res
 
 def main():
     atlases = {

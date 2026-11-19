@@ -36,30 +36,29 @@ C	DELETE THIS ACCOUNT	034.png	590	171	104	54
 C	AND ALL ITS PROGRESS?	035.png	398	171	104	54
 C	BEST SCORE:	036.png	431	171	104	54
 C	BEST TIME:	037.png	376	171	104	54
-K	WELCOME TO ZUMA HD!	038.png	525	165	116	78
-K	WELCOME TO ZUMA HD, *	039.png	562	165	116	78
-C	LEVEL *	040.png	255	171	104	54
-C	CHAIN BONUS x*	041.png	527	171	104	54
-C	COMBO x*	042.png	171	171	104	54
-C	BONUS +500	043.png	433	171	104	54
-C	Altar of Tlaloc	044.png	415	171	104	54
-C	Breath of Ehecatl	045.png	523	171	104	54
-C	Codex of Mixtec	046.png	623	171	104	54
-C	Dark Vortex	047.png	548	171	104	54
-C	Lair of the Mud Snake	048.png	504	171	104	54
-C	Landing Pad	049.png	434	171	104	54
-C	Long Range	050.png	439	171	104	54
-C	Mirror Serpent	051.png	421	171	104	54
-C	Mouth of Centeotl	052.png	457	171	104	54
-C	Mud Slide	053.png	485	171	104	54
-C	Osprey Talon	054.png	437	171	104	54
-C	Riverbed Mosaic	055.png	605	171	104	54
-C	Rorschach	056.png	367	171	104	54
-C	Sand Garden	057.png	434	171	104	54
-C	Shrine of Quetzalcoatl	058.png	601	171	104	54
-C	Snake Pit	059.png	405	171	104	54
-C	Spiral of Doom	060.png	420	171	104	54
-C	Sun Stone	061.png	430	171	104	54
-C	Switchback	062.png	511	171	104	54
-C	When Spirals Attack	063.png	721	171	104	54
-C	Zumaic Exodus	064.png	326	171	104	54
+K	WELCOME TO ZUMA HD!	038.png	1023	165	116	78
+C	LEVEL *	039.png	255	171	104	54
+C	CHAIN BONUS x*	040.png	527	171	104	54
+C	COMBO x*	041.png	171	171	104	54
+C	BONUS +500	042.png	433	171	104	54
+C	Altar of Tlaloc	043.png	415	171	104	54
+C	Breath of Ehecatl	044.png	523	171	104	54
+C	Codex of Mixtec	045.png	623	171	104	54
+C	Dark Vortex	046.png	548	171	104	54
+C	Lair of the Mud Snake	047.png	504	171	104	54
+C	Landing Pad	048.png	434	171	104	54
+C	Long Range	049.png	439	171	104	54
+C	Mirror Serpent	050.png	421	171	104	54
+C	Mouth of Centeotl	051.png	457	171	104	54
+C	Mud Slide	052.png	485	171	104	54
+C	Osprey Talon	053.png	437	171	104	54
+C	Riverbed Mosaic	054.png	605	171	104	54
+C	Rorschach	055.png	367	171	104	54
+C	Sand Garden	056.png	434	171	104	54
+C	Shrine of Quetzalcoatl	057.png	601	171	104	54
+C	Snake Pit	058.png	405	171	104	54
+C	Spiral of Doom	059.png	420	171	104	54
+C	Sun Stone	060.png	430	171	104	54
+C	Switchback	061.png	511	171	104	54
+C	When Spirals Attack	062.png	721	171	104	54
+C	Zumaic Exodus	063.png	326	171	104	54
