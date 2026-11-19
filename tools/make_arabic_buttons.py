@@ -19,6 +19,7 @@ import cv2
 from PIL import Image, ImageDraw, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+CARVED_GEOM = None
 ROOT = os.path.dirname(HERE)
 UPSTREAM = 'b05dc19'   # original pictures, before any change of ours
 KUFI = os.path.join(HERE, 'fonts', 'ReemKufi.ttf')
@@ -67,6 +68,35 @@ def inner_band(h, w, style):
     else:
         b[int(h * .22):int(h * .90), int(w * .20):int(w * .80)] = 1
     return b
+
+# wooden buttons: part of the width that is the flat board (not the arrow)
+body_box = {
+    'رجوع': (0.20, 0.97),     # BACK: arrow on the left
+    'التالي': (0.03, 0.78),   # NEXT: arrow on the right
+    'العب': (0.04, 0.96),
+    'القائمة الرئيسية': (0.05, 0.95),
+    'القائمة': (0.05, 0.95),
+}
+
+def text_lines(m):
+    """Top and bottom lines of the old letters (they follow the stone)."""
+    xs, tops, bots = [], [], []
+    for x in range(m.shape[1]):
+        ys = np.where(m[:, x] > 0)[0]
+        if len(ys) > 3:
+            xs.append(x); tops.append(ys.min()); bots.append(ys.max())
+    xs = np.array(xs, np.float32)
+    def robust(vals):
+        vals = np.array(vals, np.float32)
+        p = np.polyfit(xs, vals, 1)
+        for _ in range(2):
+            r = np.abs(np.polyval(p, xs) - vals)
+            keep = r <= np.percentile(r, 60)
+            p = np.polyfit(xs[keep], vals[keep], 1)
+        p[0] = float(np.clip(p[0], -0.15, 0.15))
+        p[1] = float(np.median(vals - p[0] * xs))
+        return lambda x, p=p: float(np.polyval(p, x))
+    return robust(tops), robust(bots)
 
 def arabic_mask(text, lines):
     font = ImageFont.truetype(KUFI, 160, layout_engine=ImageFont.Layout.RAQM)
@@ -163,14 +193,50 @@ def paint_state(reg, style, text, lines, ref_mask=None, ref_box=None, seed=0):
     bx0, by0, bx1, by1 = box
     bw, bh = bx1 - bx0 + 1, by1 - by0 + 1
     a_src = arabic_mask(text, lines)
-    if style == 'embossed':
-        a_fit = fit(a_src, bw * 0.85, bh * 0.92, style)
+    a = np.zeros((h, w), np.float32)
+    if style == 'carved':
+        # follow the stone: same slant and perspective as the English letters.
+        # The shape is measured on the normal state and reused (moved) on the
+        # others, so the word has the same size in all three.
+        global CARVED_GEOM
+        ys_m, xs_m = np.where(m > 0)
+        cen = (xs_m.mean(), ys_m.mean())
+        if seed == 0:
+            CARVED_GEOM = (text_lines(m), (bx0, bx1), cen)
+        (t0, b0), (gx0, gx1), c0 = CARVED_GEOM
+        dx, dy = cen[0] - c0[0], cen[1] - c0[1]
+        top_l = lambda x, t0=t0: t0(x - dx) + dy
+        bot_l = lambda x, b0=b0: b0(x - dx) + dy
+        bx0, bx1 = gx0 + dx, gx1 + dx
+        bw = bx1 - bx0 + 1
+        hav = np.mean([bot_l(x) - top_l(x) for x in (bx0, bx1)])
+        ar = a_src.shape[1] / a_src.shape[0]
+        tw = min(bw * 1.0, hav * 1.3 * ar)
+        cx = (bx0 + bx1) / 2
+        x0, x1 = cx - tw / 2, cx + tw / 2
+        shrink = (hav - min(hav, tw / ar)) / 2
+        src = cv2.resize(a_src, (int(tw), int(hav)), interpolation=cv2.INTER_AREA)
+        # keep the word's shape: letters fill the height only as much as they need
+        sh, sw = src.shape
+        quad_src = np.float32([[0, 0], [sw, 0], [sw, sh], [0, sh]])
+        quad_dst = np.float32([[x0, top_l(x0) + shrink], [x1, top_l(x1) + shrink],
+                               [x1, bot_l(x1) - shrink], [x0, bot_l(x0) - shrink]])
+        P = cv2.getPerspectiveTransform(quad_src, quad_dst)
+        a = cv2.warpPerspective(src, P, (w, h), flags=cv2.INTER_LINEAR)
+        gy, th = int(min(top_l(x0), top_l(x1))), int(hav)
     else:
-        a_fit = fit(a_src, bw * 1.04, bh * 0.98, style)
-    th, tw = a_fit.shape
-    gx = int(bx0 + (bw - tw) / 2); gy = int(by0 + (bh - th) / 2)
-    gx = max(0, min(w - tw, gx)); gy = max(0, min(h - th, gy))
-    a = np.zeros((h, w), np.float32); a[gy:gy + th, gx:gx + tw] = a_fit
+        if style == 'embossed':
+            a_fit = fit(a_src, bw * 0.85, bh * 0.92, style)
+            cx, cy = (bx0 + bx1) / 2, (by0 + by1) / 2
+        else:
+            body = body_box.get(text)
+            bx0b, bx1b = (body[0] * w, body[1] * w) if body else (bx0, bx1)
+            a_fit = fit(a_src, (bx1b - bx0b) * 0.80, bh * 0.78, style)
+            cx, cy = (bx0b + bx1b) / 2, h * 0.5 - 1
+        th, tw = a_fit.shape
+        gx = int(cx - tw / 2); gy = int(cy - th / 2)
+        gx = max(0, min(w - tw, gx)); gy = max(0, min(h - th, gy))
+        a[gy:gy + th, gx:gx + tw] = a_fit
     a = np.clip(a * 1.2, 0, 1)
 
     # letter colours: same gradient as the English letters had

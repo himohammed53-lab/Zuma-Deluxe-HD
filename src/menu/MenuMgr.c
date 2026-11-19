@@ -1452,7 +1452,10 @@ void MenuMgr_DrawWelcome(Engine *engine, MenuMgr* m) {
     int cur = m->profiles.current;
     if (cur >= 0) {
         SDL_snprintf(buff, sizeof(buff), "WELCOME TO ZUMA HD, %s!", m->profiles.names[cur]);
-        Engine_DrawTextExt(engine, buff, FONT_NATIVE_ALIEN_EXT_16, white, false, true, 640, 0);
+        /* Arabic: Kufi, a bit smaller so it sits nicely in the sky */
+        Engine_DrawTextExtScale(engine, buff, FONT_NATIVE_ALIEN_EXT_16,
+            Lang_Get() == LANG_AR ? 0.8f : 1.0f, white, false, true, 640,
+            Lang_Get() == LANG_AR ? 6 : 0);
 
     } else {
         Engine_DrawTextExt(engine, "WELCOME TO ZUMA HD!", FONT_NATIVE_ALIEN_EXT_16, white, false, true, 640, 0);
