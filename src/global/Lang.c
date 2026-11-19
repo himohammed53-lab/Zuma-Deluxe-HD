@@ -172,7 +172,15 @@ static bool Lang_Available(void) {
     return s_textsLen > 0;
 }
 
+static float Lang_ArRun(Engine* engine, const char* str, int fontID, float scale,
+                        float x, float y, bool draw);
+bool Lang_HasArabic(const char* str);
+
 bool Lang_TextWidth(Engine* engine, const char* str, int fontID, int* width) {
+    if (str[0] && Lang_HasArabic(str)) {    /* a name typed in Arabic */
+        *width = (int)Lang_ArRun(engine, str, fontID, 1.0f, 0, 0, false);
+        return true;
+    }
     if (s_busy || !Lang_Available() || !str[0])
         return false;
 
@@ -213,6 +221,10 @@ bool Lang_TextWidth(Engine* engine, const char* str, int fontID, int* width) {
 
 bool Lang_DrawText(Engine* engine, const char* str, int fontID,
                    float scale, float x, float y) {
+    if (str[0] && fontID >= 0 && fontID < (int)engine->fontsLen && Lang_HasArabic(str)) {
+        Lang_ArRun(engine, str, fontID, scale, x, y, true);
+        return true;
+    }
     if (s_busy || !Lang_Available() || !str[0] || fontID < 0 || fontID >= (int)engine->fontsLen)
         return false;
 
@@ -282,4 +294,180 @@ bool Lang_DrawText(Engine* engine, const char* str, int fontID,
     SDL_SetTextureAlphaMod(t->tex, a);
     SDL_RenderCopyF(engine->render, t->tex, NULL, &dst);
     return true;
+}
+
+/* ===================================================================
+   Arabic names typed by the players: the letters are joined here
+   (start / middle / end shapes) and drawn right to left from
+   content/lang/ar/font.png (made by tools/make_arabic_font.py).
+   =================================================================== */
+
+#define AR_GLYPHS_MAX 200
+
+typedef struct {
+    int cp, form;
+    SDL_Rect src;
+    int left;
+    float adv;
+} ArGlyph;
+
+static ArGlyph s_ar[AR_GLYPHS_MAX];
+static int s_arLen = 0;
+static int s_arBaseline = 0, s_arAlef = 1, s_arSpace = 10;
+static SDL_Texture* s_arTex = NULL;
+static bool s_arTried = false;
+
+static bool Lang_ArLoad(Engine* engine) {
+    if (s_arTried)
+        return s_arTex != NULL;
+    s_arTried = true;
+
+    char* base = Engine_GetBasePath();
+    char path[300];
+    SDL_snprintf(path, sizeof(path), "%slang/ar/font.txt", base ? base : "");
+    FILE* f = fopen(path, "r");
+    if (!f) { SDL_free(base); return false; }
+
+    int size, height;
+    if (fscanf(f, "SIZE %d HEIGHT %d BASELINE %d ALEF %d SPACE %d",
+               &size, &height, &s_arBaseline, &s_arAlef, &s_arSpace) != 5) {
+        fclose(f); SDL_free(base); return false;
+    }
+    while (s_arLen < AR_GLYPHS_MAX) {
+        ArGlyph* g = &s_ar[s_arLen];
+        if (fscanf(f, "%d %d %d %d %d %d %d %f", &g->cp, &g->form, &g->src.x, &g->src.y,
+                   &g->src.w, &g->src.h, &g->left, &g->adv) != 8)
+            break;
+        s_arLen++;
+    }
+    fclose(f);
+
+    SDL_snprintf(path, sizeof(path), "%slang/ar/font.png", base ? base : "");
+    SDL_free(base);
+    s_arTex = Engine_TextureLoad(engine, path);
+    return s_arTex != NULL;
+}
+
+/* next UTF-8 code point, moves *p */
+static int Lang_NextCp(const char** p) {
+    const unsigned char* s = (const unsigned char*)*p;
+    int cp;
+    if (s[0] < 0x80) { cp = s[0]; *p += 1; }
+    else if ((s[0] & 0xE0) == 0xC0 && s[1]) { cp = ((s[0] & 0x1F) << 6) | (s[1] & 0x3F); *p += 2; }
+    else if ((s[0] & 0xF0) == 0xE0 && s[1] && s[2]) {
+        cp = ((s[0] & 0x0F) << 12) | ((s[1] & 0x3F) << 6) | (s[2] & 0x3F); *p += 3;
+    } else { cp = '?'; *p += 1; }
+    return cp;
+}
+
+bool Lang_IsArabicCp(int cp) {
+    return cp >= 0x0621 && cp <= 0x064A;
+}
+
+bool Lang_HasArabic(const char* str) {
+    const char* p = str;
+    while (*p)
+        if (Lang_IsArabicCp(Lang_NextCp(&p)))
+            return true;
+    return false;
+}
+
+/* 'D' joins both sides, 'R' only to the letter before it, 'N' none */
+static char Lang_JoinType(int cp) {
+    static const int right[] = { 0x0627, 0x0623, 0x0625, 0x0622, 0x062F, 0x0630,
+                                 0x0631, 0x0632, 0x0648, 0x0624, 0x0629 };
+    if (!Lang_IsArabicCp(cp) || cp == 0x0621)
+        return 'N';
+    for (unsigned i = 0; i < sizeof(right) / sizeof(right[0]); i++)
+        if (cp == right[i])
+            return 'R';
+    return 'D';
+}
+
+static int Lang_LamAlef(int alef) {
+    switch (alef) {
+        case 0x0627: return 0xFEFB;
+        case 0x0623: return 0xFEF7;
+        case 0x0625: return 0xFEF9;
+        case 0x0622: return 0xFEF5;
+    }
+    return 0;
+}
+
+static ArGlyph* Lang_ArFind(int cp, int form) {
+    for (int i = 0; i < s_arLen; i++)
+        if (s_ar[i].cp == cp && s_ar[i].form == form)
+            return &s_ar[i];
+    if (form != 0)
+        return Lang_ArFind(cp, form == 2 ? 3 : 0);
+    return NULL;
+}
+
+/* Draws (draw = true) or measures an Arabic name. Returns its width. */
+static float Lang_ArRun(Engine* engine, const char* str, int fontID, float scale,
+                        float x, float y, bool draw) {
+    if (!Lang_ArLoad(engine))
+        return 0;
+
+    int cps[128], n = 0;
+    const char* p = str;
+    while (*p && n < 128)
+        cps[n++] = Lang_NextCp(&p);
+
+    int f = (fontID >= 0 && fontID < LANG_FONTS) ? fontID : 1;
+    float capH = s_capH[f] * engine->scale_y * scale;
+    float k = capH * 0.78f / (s_arAlef > 0 ? s_arAlef : 1);   /* like the English capitals */
+
+    /* shape: pick each letter's form */
+    ArGlyph* gl[128]; int gn = 0; bool sp[128];
+    for (int i = 0; i < n; i++) {
+        int c = cps[i];
+        bool prevJ = i > 0 && Lang_JoinType(cps[i - 1]) == 'D';
+        sp[gn] = false;
+        if (c == 0x0644 && i + 1 < n && Lang_LamAlef(cps[i + 1])) {
+            gl[gn++] = Lang_ArFind(Lang_LamAlef(cps[i + 1]), prevJ ? 3 : 0);
+            i++;
+            continue;
+        }
+        char t = Lang_JoinType(c);
+        if (t == 'N') {
+            if (c == ' ') { sp[gn] = true; gl[gn++] = NULL; }
+            else gl[gn++] = Lang_ArFind(c, 0);
+            continue;
+        }
+        bool pj = prevJ;
+        bool nj = t == 'D' && i + 1 < n && Lang_JoinType(cps[i + 1]) != 'N';
+        int form = (pj && nj) ? 2 : pj ? 3 : nj ? 1 : 0;
+        gl[gn++] = Lang_ArFind(c, form);
+    }
+
+    float total = 0;
+    for (int i = 0; i < gn; i++)
+        total += sp[i] ? s_arSpace : (gl[i] ? gl[i]->adv : 0);
+    total *= k;
+    if (!draw)
+        return total;
+
+    Font* font = engine->fonts[fontID];
+    Uint8 r, g, b, a;
+    SDL_GetTextureColorMod(font->texture, &r, &g, &b);
+    SDL_GetTextureAlphaMod(font->texture, &a);
+    SDL_SetTextureColorMod(s_arTex, r * s_tint[f][0] / 255, g * s_tint[f][1] / 255, b * s_tint[f][2] / 255);
+    SDL_SetTextureAlphaMod(s_arTex, a);
+
+    float baselineY = y + (s_capTop[f] + s_capH[f]) * engine->scale_y * scale;
+    float pen = x + total;          /* right to left */
+    for (int i = 0; i < gn; i++) {
+        if (sp[i]) { pen -= s_arSpace * k; continue; }
+        if (!gl[i]) continue;
+        SDL_FRect dst = { pen + gl[i]->left * k, baselineY - s_arBaseline * k,
+                          gl[i]->src.w * k, gl[i]->src.h * k };
+        SDL_RenderCopyF(engine->render, s_arTex, &gl[i]->src, &dst);
+        pen -= gl[i]->adv * k;
+    }
+    return total;
+}
+
+int Lang_StrWidth(const char* str, int fontID) {
+    return s_engine ? Engine_GetTextWidth(s_engine, str, fontID) : 0;
 }

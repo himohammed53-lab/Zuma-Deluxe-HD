@@ -7,10 +7,11 @@
 #include <stdbool.h>
 
 #define PROFILES_MAX      6
-#define PROFILE_NAME_MAX 12
+#define PROFILE_NAME_MAX 12      /* letters */
+#define PROFILE_NAME_BYTES 64
 
 typedef struct _Profiles {
-    char names[PROFILES_MAX][PROFILE_NAME_MAX + 1]; /* "" = empty slot */
+    char names[PROFILES_MAX][PROFILE_NAME_BYTES];   /* UTF-8, "" = empty slot */
     int current;                                      /* -1 = nobody yet */
 } Profiles;
 

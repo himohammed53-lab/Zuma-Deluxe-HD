@@ -694,6 +694,10 @@ bool Engine_IsMouseDown(void) {
     return s_pointerDown;
 }
 
+static bool s_touch = false;
+void Engine_SetTouch(bool touch) { s_touch = touch; }
+bool Engine_IsTouch(void) { return s_touch; }
+
 bool Engine_WasClicked(void) {
     return s_clickedThisFrame;
 }
@@ -701,12 +705,20 @@ bool Engine_WasClicked(void) {
 /* ---- Typing a name (opens the phone keyboard on Android) ---- */
 static bool s_textActive = false;
 static bool s_textEntered = false;
-static char s_text[32];
-static int  s_textMax = 0;
+static char s_text[96];     /* UTF-8: Arabic letters take 2 bytes */
+static int  s_textMax = 0;  /* in letters */
+
+static int Engine_Utf8Count(const char* s) {
+    int n = 0;
+    for (; *s; s++)
+        if (((unsigned char)*s & 0xC0) != 0x80)
+            n++;
+    return n;
+}
 
 void Engine_TextInputStart(int maxLen) {
     s_text[0] = 0;
-    s_textMax = maxLen < (int)sizeof(s_text) - 1 ? maxLen : (int)sizeof(s_text) - 1;
+    s_textMax = maxLen;
     s_textActive = true;
     s_textEntered = false;
     SDL_StartTextInput();
@@ -721,30 +733,56 @@ bool Engine_TextInputIsActive(void) {
     return s_textActive;
 }
 
+/* Keeps A-Z, 0-9 (English names) or Arabic letters (Arabic names), and
+   single spaces. One name is all English or all Arabic. */
 void Engine_TextInputAppend(const char* utf8) {
     if (!s_textActive)
         return;
 
-    int len = (int)strlen(s_text);
-    for (const char* c = utf8; *c && len < s_textMax; c++) {
-        char ch = *c;
-        if (ch >= 'a' && ch <= 'z')
-            ch = ch - 'a' + 'A';  /* the game font is upper-case */
+    const unsigned char* c = (const unsigned char*)utf8;
+    while (*c) {
+        int cp, len;
+        if (c[0] < 0x80) { cp = c[0]; len = 1; }
+        else if ((c[0] & 0xE0) == 0xC0 && c[1]) { cp = ((c[0] & 0x1F) << 6) | (c[1] & 0x3F); len = 2; }
+        else if ((c[0] & 0xF0) == 0xE0 && c[1] && c[2]) { cp = 0xFFFF; len = 3; }
+        else { cp = 0xFFFF; len = 1; }
+        c += len;
 
-        bool ok = (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') ||
-                  (ch == ' ' && len > 0 && s_text[len - 1] != ' ');
-        if (!ok)
-            continue;               /* letters the font can't show */
+        int n = (int)strlen(s_text);
+        if (Engine_Utf8Count(s_text) >= s_textMax || n + 3 >= (int)sizeof(s_text))
+            break;
 
-        s_text[len++] = ch;
-        s_text[len] = 0;
+        bool hasAr = Lang_HasArabic(s_text);
+        bool hasEn = false;
+        for (int i = 0; s_text[i]; i++)
+            if ((s_text[i] >= 'A' && s_text[i] <= 'Z') || (s_text[i] >= '0' && s_text[i] <= '9'))
+                hasEn = true;
+
+        if (cp >= 'a' && cp <= 'z')
+            cp = cp - 'a' + 'A';  /* the game font is upper-case */
+
+        if (cp == ' ') {
+            if (n > 0 && s_text[n - 1] != ' ')
+                strcat(s_text, " ");
+        } else if (((cp >= 'A' && cp <= 'Z') || (cp >= '0' && cp <= '9')) && !hasAr) {
+            s_text[n] = (char)cp; s_text[n + 1] = 0;
+        } else if (Lang_IsArabicCp(cp) && !hasEn) {
+            s_text[n]     = (char)(0xC0 | (cp >> 6));
+            s_text[n + 1] = (char)(0x80 | (cp & 0x3F));
+            s_text[n + 2] = 0;
+        }
+        /* anything else: a letter the game can't show */
     }
 }
 
 void Engine_TextInputBackspace(void) {
     int len = (int)strlen(s_text);
-    if (s_textActive && len > 0)
-        s_text[len - 1] = 0;
+    if (!s_textActive || len == 0)
+        return;
+    len--;
+    while (len > 0 && ((unsigned char)s_text[len] & 0xC0) == 0x80)
+        len--;   /* remove the whole letter */
+    s_text[len] = 0;
 }
 
 void Engine_TextInputEnter(void) {

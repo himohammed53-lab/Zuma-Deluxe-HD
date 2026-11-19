@@ -30,4 +30,10 @@ bool Lang_DrawText(struct _Engine* engine, const char* str, int fontID,
 bool Lang_TextWidth(struct _Engine* engine, const char* str, int fontID,
                     int* width);
 
+/* Names typed in Arabic */
+bool Lang_HasArabic(const char* str);
+bool Lang_IsArabicCp(int cp);
+/* width of a text with the given game font (uses the engine of Lang_Init) */
+int  Lang_StrWidth(const char* str, int fontID);
+
 #endif

@@ -15,7 +15,7 @@ void Profiles_Load(Profiles* p) {
     if (!f)
         return;
 
-    char line[64];
+    char line[128];
     if (fgets(line, sizeof(line), f))
         p->current = atoi(line);
 

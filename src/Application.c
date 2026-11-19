@@ -135,7 +135,11 @@ static void ApplicationZuma_HandleEvents(App *app, Engine *engine) {
       else if (e.key.keysym.sym == SDLK_RETURN || e.key.keysym.sym == SDLK_KP_ENTER)
         Engine_TextInputEnter();
       break;
+    case SDL_MOUSEMOTION:
+      Engine_SetTouch(e.motion.which == SDL_TOUCH_MOUSEID);
+      break;
     case SDL_MOUSEBUTTONDOWN:
+      Engine_SetTouch(e.button.which == SDL_TOUCH_MOUSEID);
       if (e.button.button == SDL_BUTTON_LEFT &&
           !(e.button.which == SDL_TOUCH_MOUSEID &&
             (e.button.x < 0 || e.button.x >= WINDOW_WIDTH)))

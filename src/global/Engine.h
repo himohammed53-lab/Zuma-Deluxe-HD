@@ -117,7 +117,9 @@ void Engine_InputBeginFrame(void);
 void Engine_InputPointerDown(void);
 void Engine_InputPointerUp(void);
 bool Engine_IsMouseDown(void);
-bool Engine_WasClicked(void);   /* finger lifted / mouse released this frame */
+bool Engine_WasClicked(void);
+void Engine_SetTouch(bool touch);   /* last pointer was a finger */
+bool Engine_IsTouch(void);   /* finger lifted / mouse released this frame */
 
 /* Typing (player name). Only A-Z, 0-9 and spaces are kept. */
 void Engine_TextInputStart(int maxLen);

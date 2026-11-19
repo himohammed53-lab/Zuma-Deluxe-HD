@@ -56,6 +56,12 @@ void Button_Update(Engine *engine, Button* btn) {
             } else {
                 btn->clicked = (btn->state == BTN_CLICKED);
 
+                if (Engine_IsTouch()) {
+                    /* a finger doesn't hover: no lit-up button after a tap */
+                    btn->state = BTN_IDLE;
+                    return;
+                }
+
                 if (!btn->state == BTN_HOVER) {
                     if (btn->soundHoverSfxID != -1) {
                         Engine_PlaySoundSfxPitch(engine, btn->soundHoverSfxID, btn->sndSfxPitch);
@@ -762,6 +768,7 @@ DialogueBox* DialogueBox_CreateOptions(Engine *engine) {
         Button_SetText(&b, langs[i]);
         b.xscale = 2;      /* segmented button, stretched to drawW */
         b.drawW = 150;
+        b.deadBorder = 10; /* the two buttons touch: no shared tap area */
         b.textScale = 0.8f;
         b.pos.x = 0;   /* placed by DialogueBox_LayoutOptions */
         b.pos.y = slSnd.pos.y + 52;
@@ -1387,6 +1394,8 @@ static DialogueBox* MenuMgr_CreateDeleteDialog(const char* name) {
     tn.pos.x = -260;
     tn.pos.y = -118;
     SDL_strlcpy(tn.str, name, sizeof(tn.str));
+    if (Lang_HasArabic(name))
+        tn.pos.x = 260 - Lang_StrWidth(name, tn.FontID);
     DialogueBox_AddText(db, &tn);
 
     DialogueBoxText t;
@@ -1471,7 +1480,7 @@ void MenuMgr_UpdateProfiles(LevelMgr *levelMgr, Engine *engine, MenuMgr* m) {
         bool enter = Engine_TextInputTakeEnter();
 
         if (btn == 1 || enter) {
-            char name[PROFILE_NAME_MAX + 1];
+            char name[PROFILE_NAME_BYTES];
             SDL_strlcpy(name, Engine_TextInputGet(), sizeof(name));
             int len = (int)strlen(name);
             while (len > 0 && name[len - 1] == ' ')
@@ -1593,20 +1602,31 @@ void MenuMgr_DrawProfiles(Engine *engine, MenuMgr* m) {
                 SDL_RenderDrawRect(engine->render, &bar);
             }
 
-            /* arrow pointing at the name */
-            float ax = bar.x + bar.w - 18, ay = bar.y + bar.h / 2.0f;
+            /* Arabic names sit on the right, English on the left;
+               the arrow is on the other side, pointing at the name */
+            bool arName = Lang_HasArabic(db->texts[r].str);
+            float ay = bar.y + bar.h / 2.0f;
+            float ax = arName ? bar.x + 18 : bar.x + bar.w - 18;
+            float tip = arName ? ax + 18 : ax - 18;
             SDL_Color ac = sel ? (SDL_Color){255, 230, 60, 255} : (SDL_Color){255, 230, 60, 150};
             SDL_Vertex v[3] = {
-                { { ax,      ay - 12 }, ac, { 0, 0 } },
-                { { ax,      ay + 12 }, ac, { 0, 0 } },
-                { { ax - 18, ay      }, ac, { 0, 0 } },
+                { { ax,  ay - 12 }, ac, { 0, 0 } },
+                { { ax,  ay + 12 }, ac, { 0, 0 } },
+                { { tip, ay      }, ac, { 0, 0 } },
             };
             SDL_RenderGeometry(engine->render, NULL, v, 3, NULL, 0);
 
             SDL_Color tc = sel ? (SDL_Color){255, 255, 255, 255} : (SDL_Color){255, 255, 0, 255};
             /* a bit smaller, centred in the bar */
+            float tx = db->texts[r].pos.x + 6;
+            float ty = db->texts[r].pos.y + 2;
+            if (arName) {
+                int w = (int)(Engine_GetTextWidth(engine, db->texts[r].str, db->texts[r].FontID) * 0.82f);
+                tx = bar.x + bar.w - 24 - w;
+                ty -= 6;
+            }
             Engine_DrawTextExtScale(engine, db->texts[r].str, db->texts[r].FontID, 0.82f, tc,
-                true, false, db->texts[r].pos.x + 6, db->texts[r].pos.y + 2);
+                true, false, tx, ty);
         }
     }
 
@@ -1623,13 +1643,25 @@ void MenuMgr_DrawProfiles(Engine *engine, MenuMgr* m) {
             SDL_SetRenderDrawColor(engine->render, 255, 220, 0, 255);
             SDL_RenderDrawRect(engine->render, &box);
 
-            char shown[40];
+            const char* name = Engine_TextInputGet();
             bool blink = (SDL_GetTicks() / 400) % 2;
-            SDL_snprintf(shown, sizeof(shown), "%s%s", Engine_TextInputGet(), blink ? "_" : "");
             SDL_Color white = {255, 255, 255, 255};
-            /* this font draws ~20px below its y, so lift it into the box */
-            Engine_DrawTextExt(engine, shown, FONT_NATIVE_ALIEN_EXT_16, white, true, false,
-                box.x + 14, box.y - 14);
+            if (Lang_HasArabic(name)) {
+                /* Arabic: written from the right, cursor on its left */
+                int w = Engine_GetTextWidth(engine, name, FONT_NATIVE_ALIEN_EXT_16);
+                float tx = box.x + box.w - 14 - w;
+                Engine_DrawTextExt(engine, name, FONT_NATIVE_ALIEN_EXT_16, white, true, false,
+                    tx, box.y - 20);
+                if (blink)
+                    Engine_DrawTextExt(engine, "_", FONT_NATIVE_ALIEN_EXT_16, white, true, false,
+                        tx - 26, box.y - 14);
+            } else {
+                char shown[110];
+                SDL_snprintf(shown, sizeof(shown), "%s%s", name, blink ? "_" : "");
+                /* this font draws ~20px below its y, so lift it into the box */
+                Engine_DrawTextExt(engine, shown, FONT_NATIVE_ALIEN_EXT_16, white, true, false,
+                    box.x + 14, box.y - 14);
+            }
         }
     }
     if (m->dbDelete)    DialogueBox_Draw(engine, m->dbDelete);
