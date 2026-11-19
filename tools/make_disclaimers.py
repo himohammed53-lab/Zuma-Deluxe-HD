@@ -37,19 +37,17 @@ def english():
     d.line((W * 0.30, 520, W * 0.70, 520), fill=(90, 90, 90), width=2)
     y = 540
     for text, font, col in [
-        ('This Android edition is a fan-made project, not made by the original company.', mont(24, 500), LIGHT),
-        ('Project Owner & Creator: Muhamed Alzarqi', mont(26, 700), GOLD),
-        ('AI Programming Assistant: Claude (Anthropic)', mont(26, 700), GOLD),
-        ('Created through human-AI collaboration', mont(20, 400), GREY),
+        ('Android edition: a non-profit fork of «ZUMA HD», made for fun', mont(24, 500), LIGHT),
+        ('by Muhamed Alzarqi, with the help of Claude AI (Anthropic).', mont(26, 700), GOLD),
     ]:
         d.text((W / 2, y), text, font=font, fill=col, anchor='mt')
-        y += font.size * 1.45
+        y += font.size * 1.5
     im.save(os.path.join(ROOT, 'content/images/disclaimer.jpg'), quality=92)
 
 def arabic():
     W, H = 1280, 720
     im = Image.new('RGB', (W, H), (0, 0, 0)); d = ImageDraw.Draw(im)
-    y = 150
+    y = 175
     for text, size, col in [
         ('تنبيه', 104, RED),
         ('مطوّرو هذه اللعبة لا علاقة لهم بشركة PopCap أو EA.', 42, WHITE),
@@ -63,13 +61,11 @@ def arabic():
     d.line((W * 0.30, y, W * 0.70, y), fill=(90, 90, 90), width=2)
     y += 22
     for text, size, col in [
-        ('نسخة الأندرويد هذه مشروع من صنع المعجبين، وليست من الشركة الأصلية.', 30, LIGHT),
-        ('صاحب المشروع ومنشئه: محمد الزرقي', 34, GOLD),
-        ('مساعد البرمجة بالذكاء الاصطناعي: Claude من Anthropic', 34, GOLD),
-        ('صُنع بالتعاون بين الإنسان والذكاء الاصطناعي', 26, GREY),
+        ('نسخة الأندرويد: نسخة معدّلة (فورك) غير ربحية من «ZUMA HD» صُنعت للمتعة،', 30, LIGHT),
+        ('من تطوير محمد الزرقي، بمساعدة الذكاء الاصطناعي Claude من Anthropic.', 34, GOLD),
     ]:
         d.text((W / 2, y), text, font=lalezar(size), fill=col, anchor='mt', direction='rtl')
-        y += size * 1.35
+        y += size * 1.45
     im.save(os.path.join(ROOT, 'content/images/disclaimer_ar.jpg'), quality=92)
 
 if __name__ == '__main__':
