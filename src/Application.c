@@ -84,7 +84,8 @@ static int ApplicationZuma_ShowStartupImage(Engine *engine) {
 }
 
 /* Touch: drag the finger to aim (like moving the mouse),
-   lift it to shoot at that spot. Tapping the frog swaps the balls. */
+   lift it to shoot at that spot. Tapping the frog swaps the balls
+   without turning it. e.button.x/y are already in game coordinates. */
 #define FROG_TAP_RADIUS 70
 
 static int ApplicationZuma_IsOnFrog(App *app, int x, int y) {
@@ -110,8 +111,12 @@ static void ApplicationZuma_HandleEvents(App *app, Engine *engine) {
       if (e.button.button == SDL_BUTTON_LEFT)
         Engine_InputPointerDown();
 
-      if (e.button.which == SDL_TOUCH_MOUSEID)
+      if (e.button.which == SDL_TOUCH_MOUSEID) {
+        /* finger put on the frog = swap balls on release, frog stays still */
+        if (e.button.button == SDL_BUTTON_LEFT)
+          Engine_SetAimFrozen(ApplicationZuma_IsOnFrog(app, e.button.x, e.button.y));
         break; /* touch shoots on release, see below */
+      }
 
       switch (e.button.button) {
       case SDL_BUTTON_LEFT:
@@ -128,9 +133,8 @@ static void ApplicationZuma_HandleEvents(App *app, Engine *engine) {
 
       if (e.button.which == SDL_TOUCH_MOUSEID &&
           e.button.button == SDL_BUTTON_LEFT) {
-        /* e.button.x/y are already in game coordinates */
-        app->mouseClicked =
-            ApplicationZuma_IsOnFrog(app, e.button.x, e.button.y) ? 2 : 1;
+        app->mouseClicked = Engine_IsAimFrozen() ? 2 : 1;
+        Engine_SetAimFrozen(false);
       }
       break;
     }

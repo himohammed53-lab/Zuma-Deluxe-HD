@@ -682,6 +682,16 @@ bool Engine_IsMouseDown(void) {
     return s_pointerDown;
 }
 
+static bool s_aimFrozen = false;
+
+void Engine_SetAimFrozen(bool frozen) {
+    s_aimFrozen = frozen;
+}
+
+bool Engine_IsAimFrozen(void) {
+    return s_aimFrozen;
+}
+
 char* Engine_GetBasePath(void) {
 #ifdef __ANDROID__
     /* ZumaActivity copies the APK assets here on first start */

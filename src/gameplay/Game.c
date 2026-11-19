@@ -145,6 +145,12 @@ void Game_Init(LevelMgr *levelMgr, Engine *engine, Game* game, int lvlID, int di
 static bool _Game_FrogControl(Engine *engine, Game* game, int mouseClicked) {
     bool isShooted = 0;
 
+    /* Level finished (end explosions / game over): touches do nothing.
+       Shooting here picked a new ball color from an empty chain and the
+       game froze forever. */
+    if (game->isWon || game->isLosed)
+        return false;
+
     switch (mouseClicked) {
         case 1:
             if (!isShooted && !game->chain.isEndReached && !game->isFirstTime)
@@ -365,7 +371,8 @@ static bool _Game_IsGameLose(LevelMgr *levelMgr, Engine *engine, Game* game) {
 
 void Game_Update(LevelMgr *levelMgr, Engine *engine, Game* game, int* inMenu, int mouseClicked) {
     // Get mouse pos and rotate frog;
-    Engine_GetMousePos(engine, &game->mx, &game->my);
+    if (!Engine_IsAimFrozen())   /* finger on the frog: don't turn */
+        Engine_GetMousePos(engine, &game->mx, &game->my);
     Frog_Rotate(&game->frog, game->mx, game->my);
 
     if (!game->isIntroEnded) {
@@ -403,7 +410,8 @@ void Game_Update(LevelMgr *levelMgr, Engine *engine, Game* game, int* inMenu, in
         game->dbMenu = DialogueBox_CreateMenu(engine);
     }
 
-    if (isShooted && !(int)game->frog.shift && game->btnMenu.state != BTN_CLICKED) {
+    if (isShooted && !(int)game->frog.shift && game->btnMenu.state != BTN_CLICKED &&
+        !game->isWon && !game->isLosed) {
         BulletsArr_AddBullet(&game->bullets, &game->frog);
         Engine_PlaySound(engine, SND_FIREBALL1);
 

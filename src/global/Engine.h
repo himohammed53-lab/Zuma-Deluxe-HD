@@ -118,6 +118,10 @@ void Engine_InputPointerDown(void);
 void Engine_InputPointerUp(void);
 bool Engine_IsMouseDown(void);
 
+/* While a finger is on the frog (to swap balls) the frog must not turn */
+void Engine_SetAimFrozen(bool frozen);
+bool Engine_IsAimFrozen(void);
+
 /* Folder with the game content (images, sounds, levels...).
    Returned string must be freed with SDL_free(). */
 char* Engine_GetBasePath(void);
