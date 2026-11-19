@@ -1623,7 +1623,7 @@ void MenuMgr_DrawProfiles(Engine *engine, MenuMgr* m) {
             if (arName) {
                 int w = (int)(Engine_GetTextWidth(engine, db->texts[r].str, db->texts[r].FontID) * 0.82f);
                 tx = bar.x + bar.w - 24 - w;
-                ty -= 6;
+                ty -= 13;   /* room for letters going below the line (ya) */
             }
             Engine_DrawTextExtScale(engine, db->texts[r].str, db->texts[r].FontID, 0.82f, tc,
                 true, false, tx, ty);
@@ -1651,7 +1651,7 @@ void MenuMgr_DrawProfiles(Engine *engine, MenuMgr* m) {
                 int w = Engine_GetTextWidth(engine, name, FONT_NATIVE_ALIEN_EXT_16);
                 float tx = box.x + box.w - 14 - w;
                 Engine_DrawTextExt(engine, name, FONT_NATIVE_ALIEN_EXT_16, white, true, false,
-                    tx, box.y - 20);
+                    tx, box.y - 27);   /* room for letters below the line (ya) */
                 if (blink)
                     Engine_DrawTextExt(engine, "_", FONT_NATIVE_ALIEN_EXT_16, white, true, false,
                         tx - 26, box.y - 14);
