@@ -1451,8 +1451,9 @@ void MenuMgr_DrawProfiles(Engine *engine, MenuMgr* m) {
             bool blink = (SDL_GetTicks() / 400) % 2;
             SDL_snprintf(shown, sizeof(shown), "%s%s", Engine_TextInputGet(), blink ? "_" : "");
             SDL_Color white = {255, 255, 255, 255};
+            /* this font draws ~20px below its y, so lift it into the box */
             Engine_DrawTextExt(engine, shown, FONT_NATIVE_ALIEN_EXT_16, white, true, false,
-                box.x + 14, box.y + 4);
+                box.x + 14, box.y - 14);
         }
     }
     if (m->dbDelete)    DialogueBox_Draw(engine, m->dbDelete);
@@ -1471,7 +1472,11 @@ void MenuMgr_Update(LevelMgr *levelMgr, Engine *engine, MenuMgr* m) {
     if (m->roomID == MR_MAIN && !m->inDialog) {
         switch(Menu_GetButton(m->room)) {
             case 1: MenuMgr_Set(engine, m, MR_GAUNTLET); break;
-            case 2: break;
+            case 2:   /* this stone (was GAUNTLET, did nothing) = PLAYERS */
+                m->selSlot = m->profiles.current;
+                m->dbPlayers = MenuMgr_CreatePlayersDialog(m);
+                m->inDialog = true;
+                break;
             case 3: 
                 m->dbOptions = DialogueBox_CreateOptions(engine);
                 m->inDialog = true;
@@ -1569,6 +1574,13 @@ void MenuMgr_Draw(LevelMgr *levelMgr, Engine *engine, MenuMgr* m) {
         SDL_SetTextureColorMod(tempTex, 255, 255, 255);
 
         MenuMgr_DrawWelcome(engine, m);
+
+        /* label of the PLAYERS stone (its old text was erased in menu.png) */
+        Button* bp = &m->room->buttons[1];
+        int press = (bp->state == BTN_CLICKED) ? 2 : 0;
+        SDL_Color gold = {255, 205, 90, 255};
+        Engine_DrawTextExtScale(engine, "PLAYERS", FONT_NATIVE_ALIEN_48, 0.52f, gold,
+            false, true, bp->pos.x + bp->tRect.w / 2 - 6 + press, bp->pos.y + 20 + press);
 
 
     } else if (m->roomID == MR_GAUNTLET) {
