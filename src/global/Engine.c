@@ -657,8 +657,11 @@ static bool s_pointerDown = false;
 static bool s_pressedThisFrame = false;
 static bool s_releasePending = false;
 
+static bool s_clickedThisFrame = false;
+
 void Engine_InputBeginFrame(void) {
     s_pressedThisFrame = false;
+    s_clickedThisFrame = false;
     if (s_releasePending) {
         s_pointerDown = false;
         s_releasePending = false;
@@ -672,6 +675,7 @@ void Engine_InputPointerDown(void) {
 }
 
 void Engine_InputPointerUp(void) {
+    s_clickedThisFrame = true;
     if (s_pressedThisFrame)
         s_releasePending = true; /* keep it "down" for this frame */
     else
@@ -680,6 +684,74 @@ void Engine_InputPointerUp(void) {
 
 bool Engine_IsMouseDown(void) {
     return s_pointerDown;
+}
+
+bool Engine_WasClicked(void) {
+    return s_clickedThisFrame;
+}
+
+/* ---- Typing a name (opens the phone keyboard on Android) ---- */
+static bool s_textActive = false;
+static bool s_textEntered = false;
+static char s_text[32];
+static int  s_textMax = 0;
+
+void Engine_TextInputStart(int maxLen) {
+    s_text[0] = 0;
+    s_textMax = maxLen < (int)sizeof(s_text) - 1 ? maxLen : (int)sizeof(s_text) - 1;
+    s_textActive = true;
+    s_textEntered = false;
+    SDL_StartTextInput();
+}
+
+void Engine_TextInputStop(void) {
+    s_textActive = false;
+    SDL_StopTextInput();
+}
+
+bool Engine_TextInputIsActive(void) {
+    return s_textActive;
+}
+
+void Engine_TextInputAppend(const char* utf8) {
+    if (!s_textActive)
+        return;
+
+    int len = (int)strlen(s_text);
+    for (const char* c = utf8; *c && len < s_textMax; c++) {
+        char ch = *c;
+        if (ch >= 'a' && ch <= 'z')
+            ch = ch - 'a' + 'A';  /* the game font is upper-case */
+
+        bool ok = (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') ||
+                  (ch == ' ' && len > 0 && s_text[len - 1] != ' ');
+        if (!ok)
+            continue;               /* letters the font can't show */
+
+        s_text[len++] = ch;
+        s_text[len] = 0;
+    }
+}
+
+void Engine_TextInputBackspace(void) {
+    int len = (int)strlen(s_text);
+    if (s_textActive && len > 0)
+        s_text[len - 1] = 0;
+}
+
+void Engine_TextInputEnter(void) {
+    if (s_textActive)
+        s_textEntered = true;
+}
+
+bool Engine_TextInputTakeEnter(void) {
+    bool e = s_textEntered;
+    s_textEntered = false;
+    return e;
+}
+
+const char* Engine_TextInputGet(void) {
+    return s_text;
 }
 
 static bool s_aimFrozen = false;

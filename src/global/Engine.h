@@ -117,6 +117,17 @@ void Engine_InputBeginFrame(void);
 void Engine_InputPointerDown(void);
 void Engine_InputPointerUp(void);
 bool Engine_IsMouseDown(void);
+bool Engine_WasClicked(void);   /* finger lifted / mouse released this frame */
+
+/* Typing (player name). Only A-Z, 0-9 and spaces are kept. */
+void Engine_TextInputStart(int maxLen);
+void Engine_TextInputStop(void);
+bool Engine_TextInputIsActive(void);
+void Engine_TextInputAppend(const char* utf8);
+void Engine_TextInputBackspace(void);
+void Engine_TextInputEnter(void);
+bool Engine_TextInputTakeEnter(void);
+const char* Engine_TextInputGet(void);
 
 /* While a finger is on the frog (to swap balls) the frog must not turn */
 void Engine_SetAimFrozen(bool frozen);

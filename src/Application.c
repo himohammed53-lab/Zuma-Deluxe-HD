@@ -107,6 +107,15 @@ static void ApplicationZuma_HandleEvents(App *app, Engine *engine) {
     case SDL_QUIT:
       exit(0);
       break;
+    case SDL_TEXTINPUT:
+      Engine_TextInputAppend(e.text.text);
+      break;
+    case SDL_KEYDOWN:
+      if (e.key.keysym.sym == SDLK_BACKSPACE)
+        Engine_TextInputBackspace();
+      else if (e.key.keysym.sym == SDLK_RETURN || e.key.keysym.sym == SDLK_KP_ENTER)
+        Engine_TextInputEnter();
+      break;
     case SDL_MOUSEBUTTONDOWN:
       if (e.button.button == SDL_BUTTON_LEFT)
         Engine_InputPointerDown();

@@ -5,6 +5,7 @@
 #include "../global/Enums.h"
 
 #include "../gameplay/Level.h"
+#include "Profiles.h"
 
 #define SKY_SPD 1
 
@@ -203,12 +204,26 @@ typedef struct _MenuMgr {
     int *curLvl, *curDiff;
     Menu* room;
     DialogueBox* dbOptions;
+
+    /* Player accounts */
+    Profiles profiles;
+    bool profilesReady;
+    DialogueBox* dbPlayers;
+    DialogueBox* dbNewPlayer;
+    DialogueBox* dbDelete;
+    int selSlot;
+    int rowSlot[PROFILES_MAX];   /* players dialog row -> profile slot */
+    int rowsLen;
 } MenuMgr;
 
 void MenuMgr_Init(MenuMgr* m, int* curLvl, int* curDiff);
 void MenuMgr_Set(Engine *engine, MenuMgr* m, int room);
 void MenuMgr_Update(LevelMgr *levelMgr, Engine *engine, MenuMgr* m);
 void MenuMgr_Draw(LevelMgr *levelMgr, Engine *engine, MenuMgr* m);
+
+void MenuMgr_UpdateProfiles(LevelMgr *levelMgr, Engine *engine, MenuMgr* m);
+void MenuMgr_DrawWelcome(Engine *engine, MenuMgr* m);
+void MenuMgr_DrawProfiles(Engine *engine, MenuMgr* m);
 
 
 #endif

@@ -954,6 +954,13 @@ void MenuMgr_Init(MenuMgr* m, int* curLvl, int* curDiff) {
     m->inDialog = false;
     m->curLvl = curLvl;
     m->curDiff = curDiff;
+
+    m->profilesReady = false;
+    m->dbPlayers = NULL;
+    m->dbNewPlayer = NULL;
+    m->dbDelete = NULL;
+    m->selSlot = -1;
+    m->rowsLen = 0;
 }
 
 
@@ -1103,14 +1110,365 @@ void MenuMgr_Set(Engine *engine, MenuMgr* m, int room) {
 }
 
 
+
+/////////////////////////////////////////////////////////////////////////
+// ==== Player accounts (offline, like the original Zuma) ==== //
+// Project Owner & Creator: Muhamed Alzarqi
+// AI Programming Assistant: Claude (Anthropic)
+
+#define NEWPLAYER_TEXT_NAME 1
+#define NEWPLAYER_TEXT_ERROR 2
+
+static void MenuMgr_UsePlayer(LevelMgr *levelMgr, MenuMgr* m, int slot) {
+    m->profiles.current = slot;
+    Profiles_Save(&m->profiles);
+
+    char file[32];
+    if (slot >= 0) {
+        Profiles_ProgressFile(slot, file, sizeof(file));
+        LevelMgr_UseProgressFile(levelMgr, file);
+    } else {
+        LevelMgr_UseProgressFile(levelMgr, "");
+    }
+    *m->curLvl = 0;   /* start from level 1 of this player */
+}
+
+static void MenuMgr_UpdateInDialog(MenuMgr* m) {
+    m->inDialog = m->dbOptions || m->dbPlayers || m->dbNewPlayer || m->dbDelete;
+}
+
+static DialogueBox* MenuMgr_CreatePlayersDialog(MenuMgr* m) {
+    DialogueBox* db = DialogueBox_Create();
+    db->sizeW = 6;
+    db->sizeH = 5;
+    strcpy(db->caption, "PlAYERS");
+
+    m->rowsLen = 0;
+    for (int i = 0; i < PROFILES_MAX; i++) {
+        if (!m->profiles.names[i][0])
+            continue;
+
+        DialogueBoxText t;
+        DialogueBoxText_Init(&t);
+        t.FontID = FONT_NATIVE_ALIEN_EXT_16;
+        t.pos.x = -230;
+        t.pos.y = -190 + m->rowsLen * 50;
+        SDL_strlcpy(t.str, m->profiles.names[i], sizeof(t.str));
+        DialogueBox_AddText(db, &t);
+
+        m->rowSlot[m->rowsLen++] = i;
+    }
+
+    const char* labels[3] = { "OK", "NEW", "DELETE" };
+    for (int i = 0; i < 3; i++) {
+        Button b;
+        Button_Init(&b);
+        Button_SetText(&b, labels[i]);
+        b.pos.x = -290 + i * 200;
+        b.pos.y = 170;
+        DialogueBox_AddButton(db, &b);
+    }
+
+    return db;
+}
+
+static DialogueBox* MenuMgr_CreateNewPlayerDialog(bool canCancel) {
+    DialogueBox* db = DialogueBox_Create();
+    db->sizeW = 6;
+    db->sizeH = 3;
+    /* high on the screen, so the phone keyboard doesn't cover it */
+    db->pos.y = 190;
+    db->startY = db->pos.y;
+    strcpy(db->caption, "NEW PlAYER");
+
+    DialogueBoxText tAsk;
+    DialogueBoxText_Init(&tAsk);
+    tAsk.pos.x = -260;
+    tAsk.pos.y = -100;
+    strcpy(tAsk.str, "ENTER YOUR NAME:");
+    DialogueBox_AddText(db, &tAsk);
+
+    DialogueBoxText tName;
+    DialogueBoxText_Init(&tName);
+    tName.FontID = FONT_NATIVE_ALIEN_EXT_16;
+    tName.color.b = 255;   /* white */
+    tName.pos.x = -260;
+    tName.pos.y = -62;
+    strcpy(tName.str, "");   /* the name itself is drawn in MenuMgr_DrawProfiles */
+    DialogueBox_AddText(db, &tName);
+
+    DialogueBoxText tErr;
+    DialogueBoxText_Init(&tErr);
+    tErr.color.g = 80;
+    tErr.color.b = 80;
+    tErr.pos.x = -260;
+    tErr.pos.y = -18;
+    strcpy(tErr.str, "");
+    DialogueBox_AddText(db, &tErr);
+
+    Button bOk;
+    Button_Init(&bOk);
+    Button_SetText(&bOk, "OK");
+    bOk.pos.x = canCancel ? -200 : -90;
+    bOk.pos.y = 30;
+    DialogueBox_AddButton(db, &bOk);
+
+    if (canCancel) {
+        Button bCancel;
+        Button_Init(&bCancel);
+        Button_SetText(&bCancel, "CANCEL");
+        bCancel.pos.x = 20;
+        bCancel.pos.y = 30;
+        DialogueBox_AddButton(db, &bCancel);
+    }
+
+    return db;
+}
+
+static DialogueBox* MenuMgr_CreateDeleteDialog(const char* name) {
+    DialogueBox* db = DialogueBox_Create();
+    db->sizeW = 6;
+    db->sizeH = 3;
+    strcpy(db->caption, "DElETE");
+
+    DialogueBoxText t;
+    DialogueBoxText_Init(&t);
+    t.pos.x = -260;
+    t.pos.y = -80;
+    SDL_snprintf(t.str, sizeof(t.str), "DELETE %s AND ALL", name);
+    DialogueBox_AddText(db, &t);
+
+    DialogueBoxText t2;
+    DialogueBoxText_Init(&t2);
+    t2.pos.x = -260;
+    t2.pos.y = -50;
+    strcpy(t2.str, "THEIR PROGRESS?");
+    DialogueBox_AddText(db, &t2);
+
+    Button bYes;
+    Button_Init(&bYes);
+    Button_SetText(&bYes, "YES");
+    bYes.pos.x = -200;
+    bYes.pos.y = 20;
+    DialogueBox_AddButton(db, &bYes);
+
+    Button bNo;
+    Button_Init(&bNo);
+    Button_SetText(&bNo, "NO");
+    bNo.pos.x = 20;
+    bNo.pos.y = 20;
+    DialogueBox_AddButton(db, &bNo);
+
+    return db;
+}
+
+static void MenuMgr_OpenNewPlayer(MenuMgr* m) {
+    m->dbNewPlayer = MenuMgr_CreateNewPlayerDialog(Profiles_Count(&m->profiles) > 0);
+    Engine_TextInputStart(PROFILE_NAME_MAX);
+}
+
+static void MenuMgr_CloseDialog(DialogueBox** db) {
+    if (*db) {
+        DialogueBox_Destroy(*db);
+        *db = NULL;
+    }
+}
+
+static bool MenuMgr_ClickedIn(Engine *engine, int x1, int y1, int x2, int y2) {
+    if (!Engine_WasClicked())
+        return false;
+    int mx, my;
+    Engine_GetMousePos(engine, &mx, &my);
+    return mx >= x1 && mx <= x2 && my >= y1 && my <= y2;
+}
+
+void MenuMgr_UpdateProfiles(LevelMgr *levelMgr, Engine *engine, MenuMgr* m) {
+    if (!m->profilesReady) {
+        Profiles_Load(&m->profiles);
+        MenuMgr_UsePlayer(levelMgr, m, m->profiles.current);
+        m->profilesReady = true;
+    }
+
+    if (m->roomID != MR_MAIN)
+        return;
+
+    /* First start (or every player deleted): ask for a name */
+    if (Profiles_Count(&m->profiles) == 0 && !m->dbNewPlayer && !m->dbOptions) {
+        MenuMgr_CloseDialog(&m->dbPlayers);
+        MenuMgr_CloseDialog(&m->dbDelete);
+        MenuMgr_OpenNewPlayer(m);
+    }
+
+    /* "Not you?" under the welcome line */
+    if (!m->inDialog && MenuMgr_ClickedIn(engine, 340, 0, 940, 64)) {
+        m->selSlot = m->profiles.current;
+        m->dbPlayers = MenuMgr_CreatePlayersDialog(m);
+    }
+
+    if (m->dbNewPlayer) {
+        DialogueBox* db = m->dbNewPlayer;
+        DialogueBox_Update(engine, db);
+
+        /* tap on the name line: show the keyboard again */
+        int fx = db->pos.x - 280, fy = db->pos.y - 70;
+        if (MenuMgr_ClickedIn(engine, fx, fy, fx + 560, fy + 50))
+            SDL_StartTextInput();
+
+        int btn = DialogueBox_GetBtn(db);
+        bool enter = Engine_TextInputTakeEnter();
+
+        if (btn == 1 || enter) {
+            char name[PROFILE_NAME_MAX + 1];
+            SDL_strlcpy(name, Engine_TextInputGet(), sizeof(name));
+            int len = (int)strlen(name);
+            while (len > 0 && name[len - 1] == ' ')
+                name[--len] = 0;
+
+            int slot = Profiles_Add(&m->profiles, name);
+            if (slot >= 0) {
+                Engine_TextInputStop();
+                MenuMgr_CloseDialog(&m->dbNewPlayer);
+                MenuMgr_UsePlayer(levelMgr, m, slot);
+            } else if (!name[0]) {
+                DialogueBox_SetTextStr(db, NEWPLAYER_TEXT_ERROR, "PLEASE TYPE A NAME");
+            } else {
+                DialogueBox_SetTextStr(db, NEWPLAYER_TEXT_ERROR, "THIS NAME IS ALREADY USED");
+            }
+        } else if (btn == 2) {   /* CANCEL */
+            Engine_TextInputStop();
+            MenuMgr_CloseDialog(&m->dbNewPlayer);
+            m->dbPlayers = MenuMgr_CreatePlayersDialog(m);
+        }
+    }
+    else if (m->dbDelete) {
+        DialogueBox_Update(engine, m->dbDelete);
+        int btn = DialogueBox_GetBtn(m->dbDelete);
+        if (btn == 1 || btn == 2) {
+            MenuMgr_CloseDialog(&m->dbDelete);
+            if (btn == 1) {
+                int before = m->profiles.current;
+                Profiles_Delete(&m->profiles, m->selSlot);
+                Profiles_Save(&m->profiles);
+                if (m->profiles.current != before)
+                    MenuMgr_UsePlayer(levelMgr, m, m->profiles.current);
+                m->selSlot = m->profiles.current;
+            }
+            if (Profiles_Count(&m->profiles) > 0)
+                m->dbPlayers = MenuMgr_CreatePlayersDialog(m);
+        }
+    }
+    else if (m->dbPlayers) {
+        DialogueBox* db = m->dbPlayers;
+        DialogueBox_Update(engine, db);
+
+        /* tap a name to select it */
+        for (int r = 0; r < m->rowsLen; r++) {
+            int y = db->texts[r].pos.y;
+            if (MenuMgr_ClickedIn(engine, db->pos.x - 300, y, db->pos.x + 300, y + 60)) {
+                m->selSlot = m->rowSlot[r];
+                Engine_PlaySound(engine, SND_BUTTON2);
+            }
+        }
+
+        switch (DialogueBox_GetBtn(db)) {
+            case 1:   /* OK */
+                MenuMgr_CloseDialog(&m->dbPlayers);
+                if (m->selSlot >= 0 && m->selSlot != m->profiles.current)
+                    MenuMgr_UsePlayer(levelMgr, m, m->selSlot);
+                break;
+            case 2:   /* NEW */
+                if (Profiles_Count(&m->profiles) < PROFILES_MAX) {
+                    MenuMgr_CloseDialog(&m->dbPlayers);
+                    MenuMgr_OpenNewPlayer(m);
+                }
+                break;
+            case 3:   /* DELETE */
+                if (m->selSlot >= 0 && m->profiles.names[m->selSlot][0]) {
+                    MenuMgr_CloseDialog(&m->dbPlayers);
+                    m->dbDelete = MenuMgr_CreateDeleteDialog(m->profiles.names[m->selSlot]);
+                }
+                break;
+        }
+    }
+
+    MenuMgr_UpdateInDialog(m);
+}
+
+void MenuMgr_DrawWelcome(Engine *engine, MenuMgr* m) {
+    SDL_Color yellow = {255, 230, 120, 255};
+    SDL_Color white  = {255, 255, 255, 255};
+    char buff[64];
+
+    int cur = m->profiles.current;
+    if (cur >= 0) {
+        SDL_snprintf(buff, sizeof(buff), "WELCOME TO ZUMA HD, %s!", m->profiles.names[cur]);
+        Engine_DrawTextExt(engine, buff, FONT_NATIVE_ALIEN_EXT_16, white, false, true, 640, 0);
+
+        SDL_snprintf(buff, sizeof(buff), "(TAP HERE IF YOU ARE NOT %s)", m->profiles.names[cur]);
+        Engine_DrawTextExt(engine, buff, FONT_CANCUN_10, yellow, true, true, 640, 62);
+    } else {
+        Engine_DrawTextExt(engine, "WELCOME TO ZUMA HD!", FONT_NATIVE_ALIEN_EXT_16, white, false, true, 640, 0);
+    }
+}
+
+void MenuMgr_DrawProfiles(Engine *engine, MenuMgr* m) {
+    if (m->roomID != MR_MAIN)
+        return;
+    if (m->dbPlayers) {
+        DialogueBox* db = m->dbPlayers;
+        DialogueBox_Draw(engine, db);
+
+        /* frame around the chosen player */
+        for (int r = 0; r < m->rowsLen && !db->animation; r++) {
+            if (m->rowSlot[r] != m->selSlot)
+                continue;
+            SDL_Rect bar = { db->pos.x - 270, db->texts[r].pos.y + 10, 540, 48 };
+            SDL_SetRenderDrawBlendMode(engine->render, SDL_BLENDMODE_BLEND);
+            SDL_SetRenderDrawColor(engine->render, 0, 0, 0, 110);
+            SDL_RenderFillRect(engine->render, &bar);
+            SDL_SetRenderDrawColor(engine->render, 255, 220, 0, 255);
+            SDL_RenderDrawRect(engine->render, &bar);
+
+            SDL_Color white = {255, 255, 255, 255};
+            Engine_DrawTextExt(engine, db->texts[r].str, db->texts[r].FontID, white,
+                true, false, db->texts[r].pos.x, db->texts[r].pos.y);
+        }
+    }
+    if (m->dbNewPlayer) {
+        DialogueBox* db = m->dbNewPlayer;
+        DialogueBox_Draw(engine, db);
+
+        if (!db->animation) {
+            /* name box */
+            SDL_Rect box = { db->pos.x - 280, db->pos.y - 70, 560, 48 };
+            SDL_SetRenderDrawBlendMode(engine->render, SDL_BLENDMODE_BLEND);
+            SDL_SetRenderDrawColor(engine->render, 0, 0, 0, 150);
+            SDL_RenderFillRect(engine->render, &box);
+            SDL_SetRenderDrawColor(engine->render, 255, 220, 0, 255);
+            SDL_RenderDrawRect(engine->render, &box);
+
+            char shown[40];
+            bool blink = (SDL_GetTicks() / 400) % 2;
+            SDL_snprintf(shown, sizeof(shown), "%s%s", Engine_TextInputGet(), blink ? "_" : "");
+            SDL_Color white = {255, 255, 255, 255};
+            Engine_DrawTextExt(engine, shown, FONT_NATIVE_ALIEN_EXT_16, white, true, false,
+                box.x + 14, box.y + 4);
+        }
+    }
+    if (m->dbDelete)    DialogueBox_Draw(engine, m->dbDelete);
+}
+
 void MenuMgr_Update(LevelMgr *levelMgr, Engine *engine, MenuMgr* m) {
     if (!m)
         return;
     
+    if (!m->profilesReady || m->roomID == MR_MAIN)
+        MenuMgr_UpdateProfiles(levelMgr, engine, m);
+
     if (!m->inDialog)
         Menu_Update(engine, m->room);
 
-    if (m->roomID == MR_MAIN) {
+    if (m->roomID == MR_MAIN && !m->inDialog) {
         switch(Menu_GetButton(m->room)) {
             case 1: MenuMgr_Set(engine, m, MR_GAUNTLET); break;
             case 2: break;
@@ -1210,7 +1568,7 @@ void MenuMgr_Draw(LevelMgr *levelMgr, Engine *engine, MenuMgr* m) {
         SDL_SetTextureAlphaMod(tempTex, 255);
         SDL_SetTextureColorMod(tempTex, 255, 255, 255);
 
-        Engine_DrawText(engine, "WELCOME TO ZUMA HD!", FONT_NATIVE_ALIEN_EXT_16, 426, 0);
+        MenuMgr_DrawWelcome(engine, m);
 
 
     } else if (m->roomID == MR_GAUNTLET) {
@@ -1239,5 +1597,6 @@ void MenuMgr_Draw(LevelMgr *levelMgr, Engine *engine, MenuMgr* m) {
         Engine_DrawTextExt(engine, buff, FONT_CANCUN_10, color, true,
             false, 1140, 686);
     }
-}
 
+    MenuMgr_DrawProfiles(engine, m);
+}

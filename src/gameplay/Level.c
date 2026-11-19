@@ -301,11 +301,28 @@ bool LevelMgr_IsLevelUnlocked(LevelMgr *levelMgr, int lvl) {
     return false;
 }
 
-/* v2: progress.bin from older builds could hold random numbers */
-#define PROGRESS_FILE "progress2.bin"
+/* Each player (see menu/Profiles.c) has their own progress file.
+   Empty name = no player chosen yet: nothing is saved. */
+static char s_progressFile[64] = "";
+
+void LevelMgr_UseProgressFile(LevelMgr *levelMgr, const char* fileName) {
+    SDL_strlcpy(s_progressFile, fileName, sizeof(s_progressFile));
+
+    for (int i = 0; i < LEVELS_COUNT; i++) {
+        for (int j = 0; j < 4; j++) {
+            levelMgr->bestScore[i][j] = 0;
+            levelMgr->bestTime[i][j]  = 0;
+        }
+    }
+
+    LevelMgr_LoadProgress(levelMgr);
+}
 
 int LevelMgr_SaveProgress(LevelMgr *levelMgr) {
-    FILE* file = fopen(PROGRESS_FILE, "wb");
+    if (!s_progressFile[0])
+        return 1;
+
+    FILE* file = fopen(s_progressFile, "wb");
     if (!file) {
         return 0;
     }
@@ -325,7 +342,10 @@ int LevelMgr_SaveProgress(LevelMgr *levelMgr) {
 }
 
 int LevelMgr_LoadProgress(LevelMgr *levelMgr) {
-    FILE* file = fopen(PROGRESS_FILE, "rb");
+    if (!s_progressFile[0])
+        return 1;
+
+    FILE* file = fopen(s_progressFile, "rb");
     if (!file) {
         if (!LevelMgr_SaveProgress(levelMgr)) {
             Engine_PushError("Error reading file \"progress.bin\".",
