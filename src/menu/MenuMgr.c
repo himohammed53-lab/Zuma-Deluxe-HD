@@ -64,7 +64,7 @@ void Button_Update(Engine *engine, Button* btn) {
                     return;
                 }
 
-                if (!btn->state == BTN_HOVER) {
+                if (btn->state != BTN_HOVER) {
                     if (btn->soundHoverSfxID != -1) {
                         Engine_PlaySoundSfxPitch(engine, btn->soundHoverSfxID, btn->sndSfxPitch);
                     } else if (btn->soundHoverID != -1) {

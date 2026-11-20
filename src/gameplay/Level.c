@@ -431,6 +431,8 @@ int LevelMgr_Free(LevelMgr *levelMgr) {
 
     for (int i = 0; i < STAGE_COUNT; i++)
         free(levelMgr->stages[i].levels);
+
+    return 1;
 }
 
 ////////////////////////////////////
