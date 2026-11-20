@@ -539,25 +539,46 @@ void Game_Update(LevelMgr *levelMgr, Engine *engine, Game* game, int* inMenu, in
 void Game_Draw(LevelMgr *levelMgr, Engine *engine, Game* game) {
     Level_Draw(engine, game->lvl);
     Game_DrawFinish(engine, game);
-    /* accuracy power-up: dotted aiming line in the colour of the ball */
+    /* accuracy power-up: a long thin triangle of light from the ball in
+       the frog's mouth, stopping at the first ball it reaches */
     if (game->accuracyTime > 0 && game->isIntroEnded && !game->isWon && !game->isLosed) {
         static const Uint8 pal[6][3] = { {0,254,253}, {0,250,68}, {253,253,6},
                                          {249,111,76}, {253,136,248}, {253,234,187} };
         const Uint8* c = pal[(int)game->frog.color % 6];
-        SDL_SetRenderDrawBlendMode(engine->render, SDL_BLENDMODE_BLEND);
-        SDL_SetRenderDrawColor(engine->render, c[0], c[1], c[2],
-                               game->accuracyTime < 120 && (game->accuracyTime / 8) % 2 ? 60 : 200);
-        float fx = game->frog.x, fy = game->frog.y;
         float dx = (float)game->frog.forwardX, dy = (float)game->frog.forwardY;
-        for (float d = 60; d < 1600; d += 26) {
-            float x1 = fx + dx * d, y1 = fy + dy * d;
-            float x2 = fx + dx * (d + 14), y2 = fy + dy * (d + 14);
-            if (x1 < -20 || x1 > WINDOW_WIDTH + 20 || y1 < -20 || y1 > WINDOW_HEIGHT + 20)
+        float sx = game->frog.x + dx * FROG_CUR_BALL_PAD;
+        float sy = game->frog.y + dy * FROG_CUR_BALL_PAD;
+
+        /* walk along the beam until a ball or the screen edge */
+        float len = 0;
+        for (len = 0; len < 1600; len += 4) {
+            float px = sx + dx * len, py = sy + dy * len;
+            if (px < 0 || px > WINDOW_WIDTH || py < 0 || py > WINDOW_HEIGHT)
                 break;
-            for (int o = -1; o <= 1; o++) {
-                SDL_RenderDrawLineF(engine->render, x1 + o * dy, y1 - o * dx, x2 + o * dy, y2 - o * dx);
+            bool hit = false;
+            for (int i = 0; i < game->chain.len && !hit; i++) {
+                Ball* bl = &game->chain.balls[i];
+                if (bl->inTunnel || bl->isExploding)
+                    continue;
+                float ex = bl->x - px, ey = bl->y - py;
+                hit = ex * ex + ey * ey < 22 * 22;
             }
+            if (hit)
+                break;
         }
+
+        Uint8 alpha = (game->accuracyTime < 120 && (game->accuracyTime / 8) % 2) ? 50 : 150;
+        SDL_Color base = { c[0], c[1], c[2], alpha };
+        SDL_Color tip  = { c[0], c[1], c[2], 0 };
+        float half = 14;   /* half width at the frog */
+        SDL_Vertex v[3] = {
+            { { sx - dy * half, sy + dx * half }, base, { 0, 0 } },
+            { { sx + dy * half, sy - dx * half }, base, { 0, 0 } },
+            { { sx + dx * len,  sy + dy * len  }, tip,  { 0, 0 } },
+        };
+        SDL_SetRenderDrawBlendMode(engine->render, SDL_BLENDMODE_ADD);
+        SDL_RenderGeometry(engine->render, NULL, v, 3, NULL, 0);
+        SDL_SetRenderDrawBlendMode(engine->render, SDL_BLENDMODE_BLEND);
     }
 
     Frog_Draw(engine, &game->frog, game->isIntroEnded);
