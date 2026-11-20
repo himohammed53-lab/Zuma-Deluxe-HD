@@ -1356,6 +1356,7 @@ static DialogueBox* MenuMgr_CreateNewPlayerDialog(bool canCancel) {
     db->pos.y = 190;
     db->startY = db->pos.y;
     strcpy(db->caption, "NEW AccOUNT");
+    db->captionScale = 0.8f;   /* English title a bit smaller */
 
     DialogueBoxText tAsk;
     DialogueBoxText_Init(&tAsk);
