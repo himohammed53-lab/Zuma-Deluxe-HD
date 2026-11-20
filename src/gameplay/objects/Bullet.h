@@ -19,7 +19,7 @@
 #define DISTANCE_TO_COLLIDE 2300
 #define TO_DEGREES (180.0 / M_PI)
 
-#define BOMB_RADIUS 110  /* balls this close to a bomb's hit explode */
+#define BOMB_RADIUS 145  /* balls this close to a bomb's hit explode */
 
 typedef struct _Bullet {
 	char color, onScreen, isBomb;

@@ -39,31 +39,49 @@ void Game_Init(LevelMgr *levelMgr, Engine *engine, Game* game, int lvlID, int di
     Level_Load(levelMgr, engine, game->lvl);
 
     game->graphics = LevelMgr_GetLevelGraphics(levelMgr, game->lvl);
+    /* Difficulty balance for phones (aiming with a finger is slower than
+       with a mouse). Each step is a little harder than the one before:
+       speed, colours, how long the chain is and how much it slows down. */
     switch(difficulty) {
-        case 0:
+        case 0:   /* easy */
             game->settings = &levelMgr->settings[4];
+            game->settings->ballSpd = 0.80f;
             game->settings->ballColors = 4;
-            game->settings->partTime = 70;
             game->settings->ballStartCount = 40;
+            game->settings->gaugeScore = 3000;
+            game->settings->slowFactor = 4.0f;
+            game->settings->repeatChance = 50;
+            game->settings->partTime = 70;
             break;
-        case 1:
+        case 1:   /* medium */
             game->settings = &levelMgr->settings[8];
+            game->settings->ballSpd = 0.85f;
             game->settings->ballColors = 5;
+            game->settings->ballStartCount = 45;
+            game->settings->gaugeScore = 3500;
+            game->settings->slowFactor = 3.0f;
+            game->settings->repeatChance = 45;
             game->settings->partTime = 100;
-            game->settings->ballStartCount = 50;
             break;
-        case 2:
+        case 2:   /* hard */
             game->settings = &levelMgr->settings[13];
-            game->settings->ballColors = 6;
-            game->settings->repeatChance = 25;
+            game->settings->ballSpd = 0.95f;
+            game->settings->ballColors = 5;
+            game->settings->ballStartCount = 50;
+            game->settings->gaugeScore = 4000;
+            game->settings->slowFactor = 2.5f;
+            game->settings->repeatChance = 40;
             game->settings->partTime = 120;
-            game->settings->ballStartCount = 60;
             break;
-        case 3:
+        case 3:   /* extreme */
             game->settings = &levelMgr->settings[24];
+            game->settings->ballSpd = 1.05f;
             game->settings->ballColors = 6;
+            game->settings->ballStartCount = 55;
+            game->settings->gaugeScore = 4500;
+            game->settings->slowFactor = 2.0f;
+            game->settings->repeatChance = 40;
             game->settings->partTime = 150;
-            game->settings->ballStartCount = 60;
             break;
     }
 
@@ -276,7 +294,7 @@ static void _Game_UpdatePowerUps(Engine *engine, Game* game) {
             Engine_PlaySound(engine, SND_ACCURACY3);
             break;
         case BONUS_REVERSE:
-            game->reverseTime = 150;   /* 2.5 s */
+            game->reverseTime = 90;   /* 1.5 s */
             game->slowTime = 0;
             Engine_PlaySound(engine, SND_REVERSE1);
             break;
