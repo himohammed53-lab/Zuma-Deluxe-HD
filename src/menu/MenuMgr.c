@@ -1452,6 +1452,10 @@ static DialogueBox* MenuMgr_CreateDeleteDialog(const char* name) {
 static void MenuMgr_OpenNewPlayer(MenuMgr* m) {
     m->dbNewPlayer = MenuMgr_CreateNewPlayerDialog(Profiles_Count(&m->profiles) > 0);
     Engine_TextInputStart(PROFILE_NAME_MAX);
+#ifdef __ANDROID__
+    /* the keyboard opens only when the name box is tapped */
+    SDL_StopTextInput();
+#endif
 }
 
 static void MenuMgr_CloseDialog(DialogueBox** db) {
@@ -1666,7 +1670,12 @@ void MenuMgr_DrawProfiles(Engine *engine, MenuMgr* m) {
             const char* name = Engine_TextInputGet();
             bool blink = (SDL_GetTicks() / 400) % 2;
             SDL_Color white = {255, 255, 255, 255};
-            if (Lang_HasArabic(name)) {
+            if (!name[0] && !SDL_IsScreenKeyboardShown(engine->win)) {
+                /* empty and no keyboard yet: invite to tap the box */
+                SDL_Color grey = {170, 170, 170, 255};
+                Engine_DrawTextExt(engine, "TAP HERE TO TYPE YOUR NAME", FONT_CANCUN_10, grey,
+                    false, true, box.x + box.w / 2, box.y + 12);
+            } else if (Lang_HasArabic(name)) {
                 /* Arabic: written from the right, cursor on its left */
                 int w = Engine_GetTextWidth(engine, name, FONT_NATIVE_ALIEN_EXT_16);
                 float tx = box.x + box.w - 14 - w;

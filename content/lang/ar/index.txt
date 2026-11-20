@@ -67,3 +67,4 @@ C	Sun Stone	065.png	430	171	104	54
 C	Switchback	066.png	511	171	104	54
 C	When Spirals Attack	067.png	721	171	104	54
 C	Zumaic Exodus	068.png	326	171	104	54
+C	TAP HERE TO TYPE YOUR NAME	069.png	765	171	104	54

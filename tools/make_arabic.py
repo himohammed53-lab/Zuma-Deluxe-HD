@@ -33,7 +33,7 @@ def load_font(style):
 def main():
     os.makedirs(OUT, exist_ok=True)
     for f in os.listdir(OUT):
-        if f.endswith('.png'):
+        if f.endswith('.png') and f != 'font.png':   # font.png: make_arabic_font.py
             os.remove(os.path.join(OUT, f))
 
     fonts = {'K': load_font('K'), 'C': load_font('C'), 'A': load_font('C')}
