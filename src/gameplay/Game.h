@@ -60,6 +60,7 @@ typedef struct _Game {
 	Treasure treasure;
 
 	SDL_FPoint finishPos;
+	float finishAngle;   /* skull turned toward the groove (level 1) */
 	Animation finishAnim;
 
 	SDL_Rect scoreRect;

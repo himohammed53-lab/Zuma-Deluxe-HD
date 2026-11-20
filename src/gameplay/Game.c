@@ -124,6 +124,26 @@ void Game_Init(LevelMgr *levelMgr, Engine *engine, Game* game, int lvlID, int di
         game->finishPos.x += game->lvl->spiral[i].dx * engine->scale_x;
         game->finishPos.y += game->lvl->spiral[i].dy * engine->scale_y;
     }
+    game->finishAngle = 0;
+
+    /* Level 1 (spiral): the skull sits in the middle of the round hole
+       of the picture, its mouth turned toward the end of the groove */
+    if (strcmp(game->graphics->id, "spiral") == 0) {
+        float endX = game->finishPos.x, endY = game->finishPos.y;
+        /* centre of the round hole, measured on the level picture */
+        game->finishPos.x = 481;
+        game->finishPos.y = 325;
+        (void)endX; (void)endY;
+        /* direction the balls come in (last part of the path); the mouth
+           (bottom of the skull picture) faces them */
+        float vx = 0, vy = 0;
+        for (int i = game->lvl->spiralLen - 40; i < game->lvl->spiralLen; i++) {
+            if (i < 0) continue;
+            vx += game->lvl->spiral[i].dx;
+            vy += game->lvl->spiral[i].dy;
+        }
+        game->finishAngle = (float)(atan2(-vy, -vx) * 180.0 / M_PI) - 90.0f;
+    }
 
     game->scoreRect.x = 773;
     game->scoreRect.y = 28;
@@ -745,6 +765,7 @@ void Game_DrawFinish(Engine *engine, Game* game) {
     SDL_Rect animFinishRect = {629, 0, 132, 132};
     Animation_Init(&anim, TEX_GAME_OBJECTS, animFinishRect);
     Animation_Set(&anim, 0, 1, 0);
+    Animation_SetAngle(&anim, game->finishAngle);
     Animation_Draw(engine, &anim, game->finishPos.x, game->finishPos.y);
 
     float dist_to_finish = game->lvl->spiralLen - game->chain.balls[0].pos;
@@ -752,6 +773,7 @@ void Game_DrawFinish(Engine *engine, Game* game) {
     if (dist_to_finish < game->lvl->spiralLen * PIT_OPEN_POS)
         Animation_SetFrame(&game->finishAnim, frame);
 
+    Animation_SetAngle(&game->finishAnim, game->finishAngle);
     Animation_Draw(engine, &game->finishAnim, game->finishPos.x, game->finishPos.y);
 }
 
