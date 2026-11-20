@@ -298,7 +298,7 @@ static void _Game_UpdatePowerUps(Engine *engine, Game* game) {
     if (game->frog.hasBomb) {
         if (--fuseTimer <= 0) {
             Engine_PlaySound(engine, SND_FUSE);
-            fuseTimer = 75;   /* the sound is ~1.3 s */
+            fuseTimer = 118;  /* the sound is 2 s: replay just before it ends */
         }
     } else {
         if (fuseTimer > 0)
@@ -514,6 +514,12 @@ void Game_Update(LevelMgr *levelMgr, Engine *engine, Game* game, int* inMenu, in
     if (_Game_isEnd(levelMgr, engine, game, inMenu)) return;
     if (_Game_HandleMenu(engine, game, inMenu)) return;
 
+    if (game->reverseTime > 0 && !game->chain.isEndReached) {
+        for (int i = 0; i < game->chain.len; i++)
+            if (!game->chain.balls[i].isExploding && !game->chain.balls[i].isInserted)
+                game->chain.balls[i].spd = -1.2f;
+    }
+
     BallChain_Update(engine, &game->chain, game->lvl->spiral, 
         game->lvl->spiralLen, &game->score, &game->msgs);
 
@@ -572,6 +578,15 @@ void Game_Update(LevelMgr *levelMgr, Engine *engine, Game* game, int* inMenu, in
     }
     else
         game->chain.speed = game->settings->ballSpd;
+
+    /* power-ups win over the normal speed (this was set above and
+       overwrote them before) */
+    if (!game->chain.isEndReached) {
+        if (game->reverseTime > 0)
+            game->chain.speed = -1.2f;
+        else if (game->slowTime > 0)
+            game->chain.speed = game->chain.speed * 0.3f;
+    }
     
     BulletsArr_CollideWithChainUpdate(engine, &game->bullets, &game->chain, game->lvl->spiral);
     Messages_Update(&game->msgs);
