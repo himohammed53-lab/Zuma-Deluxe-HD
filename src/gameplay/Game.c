@@ -284,10 +284,19 @@ static void _Game_UpdatePowerUps(Engine *engine, Game* game) {
             game->slowTime = 7 * 60;       /* 7 s */
             Engine_PlaySound(engine, SND_SLOWDOWN1);
             break;
+        case BONUS_BOMB:
+            game->frog.hasBomb = true;   /* next shot is a bomb */
+            Engine_PlaySound(engine, SND_JEWELAPPEAR);
+            break;
         default:
-            break;   /* the bomb works inside the chain */
+            break;
     }
     ch->lastBonus = BONUS_NONE;
+
+    if (ch->bombScore) {
+        game->score += ch->bombScore;
+        ch->bombScore = 0;
+    }
 
     if (game->reverseTime > 0) game->reverseTime--;
     if (game->slowTime > 0) game->slowTime--;

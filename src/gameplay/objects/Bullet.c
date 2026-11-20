@@ -9,6 +9,7 @@ void Bullet_Init(Bullet* bullet, float x, float y, float motionVecX,
 	bullet->motionVecY = motionVecY;
 	bullet->color = color;
 	bullet->onScreen = 1;
+	bullet->isBomb = 0;
 
 	SDL_Rect animBallRect = {48 * bullet->color, 0, 48, 48};
 	Animation_Init(&bullet->anim, TEX_GAME_OBJECTS, animBallRect);
@@ -46,6 +47,16 @@ void BulletsArr_UpdateOnScreenStatus(Engine *engine, BulletsArr* bulletsArr, int
 		}
 }
 
+static void Bullet_MakeBomb(Bullet* b, Frog* frog) {
+	if (!frog->hasBomb)
+		return;
+	frog->hasBomb = 0;
+	b->isBomb = 1;
+	SDL_Rect r = {48 * b->color, 2496, 48, 48};
+	Animation_Init(&b->anim, TEX_GAME_OBJECTS, r);
+	Animation_Set(&b->anim, 0, 0, 0);
+}
+
 void BulletsArr_AddBullet(BulletsArr* bulletsArr, Frog* frog) {
 	for (int i = 0; i < bulletsArr->len; i++) {
 		if (!bulletsArr->bullets[i].onScreen) {
@@ -58,7 +69,7 @@ void BulletsArr_AddBullet(BulletsArr* bulletsArr, Frog* frog) {
 				frog->color
 			);
 			Animation_SetAngle(&bulletsArr->bullets[i].anim, frog->rotation);
-			
+			Bullet_MakeBomb(&bulletsArr->bullets[i], frog);
 			return;
 		}
 	}
@@ -72,6 +83,7 @@ void BulletsArr_AddBullet(BulletsArr* bulletsArr, Frog* frog) {
 		frog->color
 	);
 	Animation_SetAngle(&bulletsArr->bullets[bulletsArr->len].anim, frog->rotation);
+	Bullet_MakeBomb(&bulletsArr->bullets[bulletsArr->len], frog);
 	bulletsArr->len++;
 }
 
@@ -130,6 +142,25 @@ void BulletsArr_CollideWithChainUpdate(Engine *engine, BulletsArr* bulletsArr, B
 		if (!bulletsArr->bullets[i].onScreen) continue;
 
 		int collBall = Bullet_IsCollidingWithChain(&bulletsArr->bullets[i], ballChain);
+
+		if (collBall != -1 && bulletsArr->bullets[i].isBomb) {
+			/* bomb: blow up the balls around where it hits */
+			Bullet* b = &bulletsArr->bullets[i];
+			b->onScreen = 0;
+			int first = -1, last = -1;
+			for (int k = 0; k < ballChain->len; k++) {
+				float dx = ballChain->balls[k].x - b->x, dy = ballChain->balls[k].y - b->y;
+				if (dx * dx + dy * dy < BOMB_RADIUS * BOMB_RADIUS && !ballChain->balls[k].isExploding) {
+					if (first < 0) first = k;
+					last = k;
+				}
+			}
+			if (first < 0) first = last = collBall;
+			Engine_PlaySound(engine, SND_BOMBEXPLODE);
+			BallChain_ExplodeBalls(engine, ballChain, first, last);
+			ballChain->bombScore += (last - first + 1) * 10;
+			continue;
+		}
 
 		if (collBall != -1) {
 			bulletsArr->bullets[i].onScreen = 0;

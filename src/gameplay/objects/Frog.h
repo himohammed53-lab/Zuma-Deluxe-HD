@@ -27,6 +27,7 @@ typedef struct _Frog {
 	double forwardY;
 	double rotation;
 	bool isShooted;
+	bool hasBomb;     /* bomb power-up: the next shot is a bomb */
 	Animation eyesAnim;
 } Frog;
 

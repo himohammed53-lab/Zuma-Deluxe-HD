@@ -61,6 +61,7 @@ typedef struct _BallChain {
 	clock_t glowTime;
 	Animation ballShadow;
 	char lastBonus;      /* power-up just exploded, handled by the game */
+	int bombScore;       /* points from a bomb shot, added by the game */
 } BallChain;
 
 void Ball_Init(Ball*, float, float, float, char, char, char);

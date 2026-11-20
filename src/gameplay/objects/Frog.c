@@ -11,6 +11,7 @@ void Frog_Init(Frog* frog, float x, float y) {
 	frog->forwardX = 0;
 	frog->forwardY = 1;
 	frog->isShooted = 0;
+	frog->hasBomb = 0;
 	frog->shift = 0;
 	frog->tongueShift = 0;
 
@@ -79,8 +80,12 @@ void Frog_Draw(Engine *engine, Frog* frog, bool introEnd) {
 	if (introEnd) {
 	//Drawing  currentBall
     SDL_Rect animBallRect = {48 * frog->color, 0, 48, 48};
+	if (frog->hasBomb) {   /* the bomb ball in the frog's mouth */
+		SDL_Rect bombRect = {48 * frog->color, 2496, 48, 48};
+		animBallRect = bombRect;
+	}
 	Animation_Init(&anim, TEX_GAME_OBJECTS, animBallRect);
-	Animation_Set(&anim, 24, 47, 0);
+	Animation_Set(&anim, frog->hasBomb ? 0 : 24, frog->hasBomb ? 0 : 47, 0);
 	Animation_SetAngle(&anim, frog->rotation);
 	Animation_Draw(engine, &anim, frogX + frog->forwardX*(FROG_CUR_BALL_PAD-frog->tongueShift), 
 		frogY + frog->forwardY*(FROG_CUR_BALL_PAD-frog->tongueShift));

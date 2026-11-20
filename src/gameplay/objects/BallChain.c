@@ -94,6 +94,7 @@ void BallChain_Init(BallChain* ballChain, Level* lvl, LevelSettings* settings) {
 	ballChain->isGlowing = 0;
 	ballChain->chainBonus = 0;
 	ballChain->lastBonus = BONUS_NONE;
+	ballChain->bombScore = 0;
 	
 	ballChain->maxChainBonus = 0;
 	ballChain->totalCombos = 0;
@@ -428,11 +429,6 @@ void BallChain_ExplodeBalls(Engine *engine, BallChain* ballChain, int start, int
 			continue;
 		ballChain->lastBonus = b;
 		ballChain->balls[i].bonus = BONUS_NONE;
-		if (b == BONUS_BOMB) {
-			Engine_PlaySound(engine, SND_BOMBEXPLODE);
-			start = start - 3 < 0 ? 0 : start - 3;
-			end = end + 3 > ballChain->len - 1 ? ballChain->len - 1 : end + 3;
-		}
 	}
 	for (int i = start; i <= end; i++) {
 		Animation* ballAnim = &ballChain->balls[i].anim;
