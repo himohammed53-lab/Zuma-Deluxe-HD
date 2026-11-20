@@ -252,7 +252,7 @@ static void _Game_UpdatePowerUps(Engine *engine, Game* game) {
     /* a power-up was exploded */
     switch (ch->lastBonus) {
         case BONUS_ACCURACY:
-            game->accuracyTime = 15 * 60;
+            game->accuracyTime = 10 * 60;   /* 10 s */
             Engine_PlaySound(engine, SND_ACCURACY3);
             break;
         case BONUS_REVERSE:
@@ -261,7 +261,7 @@ static void _Game_UpdatePowerUps(Engine *engine, Game* game) {
             Engine_PlaySound(engine, SND_REVERSE1);
             break;
         case BONUS_SLOW:
-            game->slowTime = 8 * 60;
+            game->slowTime = 7 * 60;       /* 7 s */
             Engine_PlaySound(engine, SND_SLOWDOWN1);
             break;
         default:
