@@ -19,7 +19,7 @@ void Game_Init(LevelMgr *levelMgr, Engine *engine, Game* game, int lvlID, int di
     game->isWon = false;
     game->goNextLevel = false;
     /* first power-up after 12-20 s of play */
-    game->powerTimer = randInt(12 * 60, 20 * 60);
+    game->powerTimer = randInt(6 * 60, 10 * 60);   /* first after 6-10 s */
     game->slowTime = game->reverseTime = game->accuracyTime = 0;
     Bullet_speedMul = 1.0f;
     game->retryLevel = false;
@@ -256,7 +256,7 @@ static void _Game_UpdatePowerUps(Engine *engine, Game* game) {
             Engine_PlaySound(engine, SND_ACCURACY3);
             break;
         case BONUS_REVERSE:
-            game->reverseTime = (int)(2.5f * 60);
+            game->reverseTime = 4 * 60;   /* 4 s */
             game->slowTime = 0;
             Engine_PlaySound(engine, SND_REVERSE1);
             break;
@@ -295,7 +295,7 @@ static void _Game_UpdatePowerUps(Engine *engine, Game* game) {
     if (anyBonus || --game->powerTimer > 0)
         return;
 
-    game->powerTimer = randInt(15 * 60, 25 * 60);
+    game->powerTimer = randInt(8 * 60, 14 * 60);   /* then every 8-14 s */
     if (ch->len < 8)
         return;
 
@@ -317,7 +317,7 @@ static void _Game_GenerateChain(Engine *engine, Game* game) {
 
     /* power-ups change the speed for a while */
     if (game->reverseTime > 0) {
-        game->chain.speed = -1.6f;
+        game->chain.speed = -1.0f;   /* gentle roll back */
     } else if (game->slowTime > 0) {
         game->chain.speed = game->settings->ballSpd * 0.35f;
     }
