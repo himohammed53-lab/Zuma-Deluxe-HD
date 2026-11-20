@@ -561,7 +561,7 @@ void Game_Draw(LevelMgr *levelMgr, Engine *engine, Game* game) {
                 if (bl->inTunnel || bl->isExploding)
                     continue;
                 float ex = bl->x - px, ey = bl->y - py;
-                hit = ex * ex + ey * ey < 22 * 22;
+                hit = ex * ex + ey * ey < 24 * 24;   /* touches the ball's edge */
             }
             if (hit)
                 break;
@@ -569,7 +569,7 @@ void Game_Draw(LevelMgr *levelMgr, Engine *engine, Game* game) {
 
         Uint8 alpha = (game->accuracyTime < 120 && (game->accuracyTime / 8) % 2) ? 50 : 150;
         SDL_Color base = { c[0], c[1], c[2], alpha };
-        SDL_Color tip  = { c[0], c[1], c[2], 0 };
+        SDL_Color tip  = { c[0], c[1], c[2], (Uint8)(alpha * 0.6f) };   /* visible up to the ball */
         float half = 14;   /* half width at the frog */
         SDL_Vertex v[3] = {
             { { sx - dy * half, sy + dx * half }, base, { 0, 0 } },
