@@ -276,7 +276,7 @@ static void _Game_UpdatePowerUps(Engine *engine, Game* game) {
             Engine_PlaySound(engine, SND_ACCURACY3);
             break;
         case BONUS_REVERSE:
-            game->reverseTime = 4 * 60;   /* 4 s */
+            game->reverseTime = 150;   /* 2.5 s */
             game->slowTime = 0;
             Engine_PlaySound(engine, SND_REVERSE1);
             break;
@@ -624,7 +624,17 @@ void Game_Draw(LevelMgr *levelMgr, Engine *engine, Game* game) {
                 break;
         }
 
-        Uint8 alpha = (game->accuracyTime < 120 && (game->accuracyTime / 8) % 2) ? 50 : 150;
+        /* the tip moves smoothly, so it doesn't jump back and forth
+           when the beam just grazes a moving ball */
+        static float s_beamLen = -1;
+        if (s_beamLen < 0 || game->accuracyTime >= 10 * 60 - 1)
+            s_beamLen = len;
+        s_beamLen += (len - s_beamLen) * 0.35f;
+        len = s_beamLen;
+
+        /* steady light; fades out gently in the last second */
+        float fade = game->accuracyTime < 60 ? game->accuracyTime / 60.0f : 1.0f;
+        Uint8 alpha = (Uint8)(150 * fade);
         SDL_Color base = { c[0], c[1], c[2], alpha };
         SDL_Color tip  = { c[0], c[1], c[2], (Uint8)(alpha * 0.6f) };   /* visible up to the ball */
         float half = 14;   /* half width at the frog */

@@ -28,9 +28,11 @@ void Frog_Rotate(Frog* frog, int mx, int my) {
 	double vecX = mx - frog->x;
 	double vecY = my - frog->y;
 
-	frog->rotation = (2 * M_PI - atan2(vecX, vecY)) * TO_DEGREES;
-
 	double length = sqrt(vecX * vecX + vecY * vecY);
+	if (length < 1)   /* finger exactly on the frog: keep the old direction */
+		return;
+
+	frog->rotation = (2 * M_PI - atan2(vecX, vecY)) * TO_DEGREES;
 	vecX = vecX / length;
 	vecY = vecY / length;
 

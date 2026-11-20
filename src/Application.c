@@ -296,8 +296,10 @@ int ApplicationZuma_Start(void) {
         /* wait the last few microseconds */
       }
       nextFrame += period;
-    } else if (now - nextFrame > period * 4) {
-      nextFrame = now + period; /* was paused or very slow: resync */
+    } else if (now - nextFrame > period) {
+      /* a slow frame: start again from now instead of rushing several
+         frames to catch up (rushing looks like a stutter) */
+      nextFrame = now + period;
     } else {
       nextFrame += period;
     }

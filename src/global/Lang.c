@@ -49,6 +49,8 @@ static const Uint8 s_tint[][3] = {
 #define LANG_FONTS ((int)(sizeof(s_capH) / sizeof(s_capH[0])))
 
 
+static bool Lang_ArLoad(Engine* engine);
+
 void Lang_Init(Engine* engine) {
     s_engine = engine;
     s_textsLen = 0;
@@ -118,6 +120,23 @@ void Lang_ApplyTextures(Engine* engine) {
         }
 
         engine->textures[id] = (s_lang == LANG_AR && s_texAr[i]) ? s_texAr[i] : s_texEn[i];
+    }
+
+    /* Arabic: load every text picture now, so nothing is read from
+       storage in the middle of a level (that caused a small hitch) */
+    if (s_lang == LANG_AR) {
+        char* base = Engine_GetBasePath();
+        for (int i = 0; i < s_textsLen; i++) {
+            LangText* t = &s_texts[i];
+            if (t->tex || t->failed)
+                continue;
+            char path[300];
+            SDL_snprintf(path, sizeof(path), "%slang/ar/%s", base ? base : "", t->file);
+            t->tex = Engine_TextureLoad(engine, path);
+            t->failed = (t->tex == NULL);
+        }
+        SDL_free(base);
+        Lang_ArLoad(engine);
     }
 }
 
