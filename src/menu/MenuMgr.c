@@ -1355,12 +1355,12 @@ static DialogueBox* MenuMgr_CreateNewPlayerDialog(bool canCancel) {
     /* high on the screen, so the phone keyboard doesn't cover it */
     db->pos.y = 190;
     db->startY = db->pos.y;
-    strcpy(db->caption, "NEW PlAYER");
+    strcpy(db->caption, "NEW AccOUNT");
 
     DialogueBoxText tAsk;
     DialogueBoxText_Init(&tAsk);
     tAsk.pos.x = -260;
-    tAsk.pos.y = -100;
+    tAsk.pos.y = Lang_Get() == LANG_AR ? -100 : -91;   /* English: a little lower, away from the title */
     strcpy(tAsk.str, "ENTER YOUR NAME:");
     DialogueBox_AddText(db, &tAsk);
 
@@ -1670,12 +1670,7 @@ void MenuMgr_DrawProfiles(Engine *engine, MenuMgr* m) {
             const char* name = Engine_TextInputGet();
             bool blink = (SDL_GetTicks() / 400) % 2;
             SDL_Color white = {255, 255, 255, 255};
-            if (!name[0] && !SDL_IsScreenKeyboardShown(engine->win)) {
-                /* empty and no keyboard yet: invite to tap the box */
-                SDL_Color grey = {170, 170, 170, 255};
-                Engine_DrawTextExt(engine, "TAP HERE TO TYPE YOUR NAME", FONT_CANCUN_10, grey,
-                    false, true, box.x + box.w / 2, box.y + 12);
-            } else if (Lang_HasArabic(name)) {
+            if (Lang_HasArabic(name)) {
                 /* Arabic: written from the right, cursor on its left */
                 int w = Engine_GetTextWidth(engine, name, FONT_NATIVE_ALIEN_EXT_16);
                 float tx = box.x + box.w - 14 - w;
