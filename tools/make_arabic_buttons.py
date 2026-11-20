@@ -273,7 +273,7 @@ def _paint_state(reg, style, text, lines, ref_mask=None, ref_box=None, seed=0):
             small = {'متوسط': 0.8, 'صعب': 0.72}.get(text, 1.0)   # as big as سهل
             a_fit = fit(a_src, bw * 0.85 * small, bh * 0.92 * small, style)
             # one straight column on the screen (measured: x 634 for all)
-            nudge = {'سهل': 1, 'متوسط': -4, 'صعب': -4, 'خارق': 4}.get(text, 0)
+            nudge = {'سهل': 0, 'متوسط': 0, 'صعب': 2, 'خارق': 1}.get(text, 0)
             cx, cy = (bx0 + bx1) / 2 + nudge, h * 0.47   # middle of the plank face
         else:
             body = body_box.get(text)
