@@ -162,7 +162,7 @@ static float Lang_Zoom(Engine* engine, LangText* t, int fontID, float scale) {
     /* Kufi letters are short: bigger, above all on the small button text.
        The clear font is tall: same size as the English letters. */
     bool big = s_capH[f] > 50;   /* the huge LEVEL title in the game */
-    float size = (t->style == 'K') ? (small ? 1.7f : 0.95f) : (small ? 1.0f : (big ? 0.42f : 1.1f));
+    float size = (t->style == 'K') ? (small ? 1.7f : 0.9f) : (small ? 1.0f : (big ? 0.42f : 1.1f));
     if (t->style != 'K' && fontID == FONT_CANCUN_12)
         size = 0.72f;   /* results window: rows close together */
     return capH * size / (t->alefH > 0 ? t->alefH : 1);
@@ -208,7 +208,7 @@ bool Lang_TextWidth(Engine* engine, const char* str, int fontID, int* width) {
         return false;
 
     int f2 = (fontID >= 0 && fontID < LANG_FONTS) ? fontID : 1;
-    float wk = (t->style == 'K' && !(s_capH[f2] * engine->scale_y < 25)) ? 0.82f : 1.0f;
+    float wk = 1.0f; (void)f2;
     int w = (int)(t->w * Lang_Zoom(engine, t, fontID, 1.0f) * wk);
     if (rest) {
         s_busy = true;
@@ -279,11 +279,7 @@ bool Lang_DrawText(Engine* engine, const char* str, int fontID,
     float capH = s_capH[f] * engine->scale_y * scale;
     float baselineY = y + capTop + capH;
 
-    float kx = k, ky = k;
-    if (t->style == 'K' && !(s_capH[f] * engine->scale_y < 25)) {
-        kx = k * 0.82f;    /* window titles: narrower ... */
-        ky = k * 1.12f;    /* ... and taller, not squashed */
-    }
+    float kx = k, ky = k;   /* same zoom both ways: natural shape */
     SDL_FRect dst = { ax, baselineY - t->baseline * ky, t->w * kx, t->h * ky };
 
     /* same colour as the game would give its own letters */

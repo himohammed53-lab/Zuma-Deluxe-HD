@@ -128,6 +128,7 @@ typedef struct _DialogueBox {
     int slidersLen;
     Slider* sliders;
 
+    float captionScale;   /* size of the window title, 1 = normal */
     int langBtn;   /* index of the ENGLISH button (ARABIC is next), 0 = none */
     int langLabel; /* index of the LANGUAGE text */
 } DialogueBox;

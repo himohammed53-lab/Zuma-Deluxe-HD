@@ -380,6 +380,7 @@ DialogueBox* DialogueBox_Create() {
 
     db->langBtn = 0;
     db->langLabel = 0;
+    db->captionScale = 1.0f;
 
     return db;
 }
@@ -592,15 +593,16 @@ void DialogueBox_Draw(Engine *engine, DialogueBox* db) {
     if (db->drawGodHead)
         cDy = 72;
     Lang_SetButtonStyle(true);
-    Engine_DrawTextExt(
+    Engine_DrawTextExtScale(
         engine, 
         db->caption, 
         FONT_NATIVE_ALIEN_EXT_18,
+        Lang_Get() == LANG_AR ? 1.0f : db->captionScale,  /* Arabic: own size */
         cColor,
         false, 
         true,
         db->pos.x,
-        dPos.y + cDy
+        dPos.y + cDy + (Lang_Get() == LANG_AR ? 0 : (1.0f - db->captionScale) * 30)
     );
     Lang_SetButtonStyle(false);
 
@@ -756,6 +758,8 @@ DialogueBox* DialogueBox_CreateOptions(Engine *engine) {
     bDone.pos.x = -236;
     bDone.pos.y = 120;
     DialogueBox_AddButton(db, &bDone);
+
+    db->captionScale = 0.8f;   /* OPTIONS title a bit smaller */
 
     /* after DONE, so the other buttons keep their numbers */
     db->langBtn = db->buttonsLen;
