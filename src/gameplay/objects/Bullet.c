@@ -24,6 +24,10 @@ void Bullet_Update(Bullet* bullet) {
 }
 
 void Bullet_Draw(Engine *engine, Bullet* bullet) {
+	if (bullet->isBomb) {
+		Frog_DrawBomb(engine, bullet->x, bullet->y, -bullet->motionVecX, -bullet->motionVecY, true);
+		return;
+	}
 	Animation_Draw(engine, &bullet->anim, bullet->x, bullet->y);
 }
 

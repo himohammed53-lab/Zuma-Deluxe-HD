@@ -33,6 +33,7 @@ typedef struct _Frog {
 
 void Frog_Init(Frog*, float, float);
 void Frog_Rotate(Frog*, int, int);
+void Frog_DrawBomb(Engine* engine, float x, float y, float dx, float dy, bool spark);
 void Frog_Draw(Engine *engine, Frog*, bool);
 
 #endif

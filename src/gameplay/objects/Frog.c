@@ -38,40 +38,66 @@ void Frog_Rotate(Frog* frog, int mx, int my) {
 	frog->forwardY = vecY;
 }
 
-/* small orange spark on the bomb's fuse, flickering */
-static void Frog_DrawSpark(Engine *engine, Frog* frog, float bx, float by) {
-	/* fuse on the side of the bomb, toward the outside of the mouth */
-	float sx = bx + (float)frog->forwardX * 15 - (float)frog->forwardY * 12;
-	float sy = by + (float)frog->forwardY * 15 + (float)frog->forwardX * 12;
+static void Frog_Disc(Engine* engine, float cx, float cy, float rad,
+                      SDL_Color mid, SDL_Color edge) {
+	SDL_Vertex v[3];
+	for (int k = 0; k < 24; k++) {
+		float a1 = k * 6.2832f / 24, a2 = (k + 1) * 6.2832f / 24;
+		v[0] = (SDL_Vertex){ { cx, cy }, mid, { 0, 0 } };
+		v[1] = (SDL_Vertex){ { cx + cosf(a1) * rad, cy + sinf(a1) * rad }, edge, { 0, 0 } };
+		v[2] = (SDL_Vertex){ { cx + cosf(a2) * rad, cy + sinf(a2) * rad }, edge, { 0, 0 } };
+		SDL_RenderGeometry(engine->render, NULL, v, 3, NULL, 0);
+	}
+}
 
+/* A classic round black bomb with a short fuse and a flickering spark.
+   (dx, dy): direction the frog looks; the fuse points that way. */
+void Frog_DrawBomb(Engine* engine, float bx, float by, float dx, float dy, bool spark) {
+	SDL_SetRenderDrawBlendMode(engine->render, SDL_BLENDMODE_BLEND);
+
+	/* fuse cap (small dark grey block) */
+	float cx = bx + dx * 19, cy = by + dy * 19;
+	SDL_Color capC = { 85, 85, 90, 255 };
+	SDL_Vertex q[6] = {
+		{ { cx - dy * 6 - dx * 5, cy + dx * 6 - dy * 5 }, capC, {0,0} },
+		{ { cx + dy * 6 - dx * 5, cy - dx * 6 - dy * 5 }, capC, {0,0} },
+		{ { cx + dy * 6 + dx * 5, cy - dx * 6 + dy * 5 }, capC, {0,0} },
+		{ { cx - dy * 6 - dx * 5, cy + dx * 6 - dy * 5 }, capC, {0,0} },
+		{ { cx + dy * 6 + dx * 5, cy - dx * 6 + dy * 5 }, capC, {0,0} },
+		{ { cx - dy * 6 + dx * 5, cy + dx * 6 + dy * 5 }, capC, {0,0} },
+	};
+	SDL_RenderGeometry(engine->render, NULL, q, 6, NULL, 0);
+
+	/* fuse cord */
+	float fx = cx + dx * 10 - dy * 4, fy = cy + dy * 10 + dx * 4;
+	SDL_SetRenderDrawColor(engine->render, 150, 120, 80, 255);
+	for (int o = -1; o <= 1; o++)
+		SDL_RenderDrawLineF(engine->render, cx + dx * 4 + o * dy * 0.7f, cy + dy * 4 - o * dx * 0.7f,
+		                    fx + o * dy * 0.7f, fy - o * dx * 0.7f);
+
+	/* body: black ball with a soft shine */
+	Frog_Disc(engine, bx, by, 20, (SDL_Color){ 55, 55, 62, 255 }, (SDL_Color){ 18, 18, 22, 255 });
+	Frog_Disc(engine, bx - 7, by - 7, 7, (SDL_Color){ 170, 170, 185, 200 }, (SDL_Color){ 60, 60, 70, 0 });
+
+	if (!spark)
+		return;
+
+	/* spark at the end of the fuse */
 	SDL_SetRenderDrawBlendMode(engine->render, SDL_BLENDMODE_ADD);
 	for (int k = 0; k < 9; k++) {
 		float a = (float)(rand() % 628) / 100.0f;
-		float len = 8 + rand() % 12;
-		float ex = sx + cosf(a) * len, ey = sy + sinf(a) * len;
-		SDL_Color hot  = { 255, 150, 20, 255 };
-		SDL_Color tip  = { 255, 80, 0, 0 };
+		float len = 7 + rand() % 11;
+		SDL_Color hot = { 255, 150, 20, 255 };
+		SDL_Color tip = { 255, 80, 0, 0 };
 		SDL_Vertex v[3] = {
-			{ { sx - sinf(a) * 1.6f, sy + cosf(a) * 1.6f }, hot, { 0, 0 } },
-			{ { sx + sinf(a) * 1.6f, sy - cosf(a) * 1.6f }, hot, { 0, 0 } },
-			{ { ex, ey }, tip, { 0, 0 } },
+			{ { fx - sinf(a) * 1.5f, fy + cosf(a) * 1.5f }, hot, { 0, 0 } },
+			{ { fx + sinf(a) * 1.5f, fy - cosf(a) * 1.5f }, hot, { 0, 0 } },
+			{ { fx + cosf(a) * len, fy + sinf(a) * len }, tip, { 0, 0 } },
 		};
 		SDL_RenderGeometry(engine->render, NULL, v, 3, NULL, 0);
 	}
-	/* round glowing core: orange outside, yellow-white inside */
-	for (int layer = 0; layer < 2; layer++) {
-		float rad = layer == 0 ? 7.0f : 3.5f;
-		SDL_Color mid  = layer == 0 ? (SDL_Color){255, 120, 0, 200} : (SDL_Color){255, 240, 170, 255};
-		SDL_Color edge = { 255, 90, 0, 0 };
-		SDL_Vertex v[3];
-		for (int k = 0; k < 12; k++) {
-			float a1 = k * 6.2832f / 12, a2 = (k + 1) * 6.2832f / 12;
-			v[0] = (SDL_Vertex){ { sx, sy }, mid, { 0, 0 } };
-			v[1] = (SDL_Vertex){ { sx + cosf(a1) * rad, sy + sinf(a1) * rad }, edge, { 0, 0 } };
-			v[2] = (SDL_Vertex){ { sx + cosf(a2) * rad, sy + sinf(a2) * rad }, edge, { 0, 0 } };
-			SDL_RenderGeometry(engine->render, NULL, v, 3, NULL, 0);
-		}
-	}
+	Frog_Disc(engine, fx, fy, 7, (SDL_Color){ 255, 120, 0, 200 }, (SDL_Color){ 255, 90, 0, 0 });
+	Frog_Disc(engine, fx, fy, 3.5f, (SDL_Color){ 255, 240, 170, 255 }, (SDL_Color){ 255, 160, 40, 0 });
 	SDL_SetRenderDrawBlendMode(engine->render, SDL_BLENDMODE_BLEND);
 }
 
@@ -128,13 +154,10 @@ void Frog_Draw(Engine *engine, Frog* frog, bool introEnd) {
 	Animation_SetAngle(&anim, frog->rotation);
 	float ballX = frogX + frog->forwardX*(FROG_CUR_BALL_PAD-frog->tongueShift);
 	float ballY = frogY + frog->forwardY*(FROG_CUR_BALL_PAD-frog->tongueShift);
-	if (frog->hasBomb) {
-		/* a black bomb */
-		anim.color.r = anim.color.g = anim.color.b = 55;
-	}
-	Animation_Draw(engine, &anim, ballX, ballY);
 	if (frog->hasBomb)
-		Frog_DrawSpark(engine, frog, ballX, ballY);
+		Frog_DrawBomb(engine, ballX, ballY, (float)frog->forwardX, (float)frog->forwardY, true);
+	else
+		Animation_Draw(engine, &anim, ballX, ballY);
 
 	//Drawing  nextBall
     SDL_Rect animBallRect1 = {15 * frog->nextColor + 234, 633, 15, 15};
