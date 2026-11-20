@@ -272,7 +272,7 @@ static void _Game_UpdatePowerUps(Engine *engine, Game* game) {
     /* a power-up was exploded */
     switch (ch->lastBonus) {
         case BONUS_ACCURACY:
-            game->accuracyTime = 10 * 60;   /* 10 s */
+            game->accuracyTime = 20 * 60;   /* 20 s */
             Engine_PlaySound(engine, SND_ACCURACY3);
             break;
         case BONUS_REVERSE:
@@ -627,7 +627,7 @@ void Game_Draw(LevelMgr *levelMgr, Engine *engine, Game* game) {
         /* the tip moves smoothly, so it doesn't jump back and forth
            when the beam just grazes a moving ball */
         static float s_beamLen = -1;
-        if (s_beamLen < 0 || game->accuracyTime >= 10 * 60 - 1)
+        if (s_beamLen < 0 || game->accuracyTime >= 20 * 60 - 1)
             s_beamLen = len;
         s_beamLen += (len - s_beamLen) * 0.35f;
         len = s_beamLen;

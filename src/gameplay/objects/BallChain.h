@@ -35,7 +35,7 @@
 
 /* Power-up balls (like the original Zuma) */
 enum { BONUS_NONE = 0, BONUS_ACCURACY, BONUS_REVERSE, BONUS_BOMB, BONUS_SLOW };
-#define BONUS_LIFE_FRAMES  (30 * 60)   /* a power-up stays 30 s on its ball */
+#define BONUS_LIFE_FRAMES  (40 * 60)   /* a power-up stays 40 s on its ball */
 #define BONUS_BLINK_FRAMES (5 * 60)    /* and blinks in its last 5 s */
 
 typedef struct _Ball {
