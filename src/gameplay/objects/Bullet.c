@@ -52,9 +52,10 @@ static void Bullet_MakeBomb(Bullet* b, Frog* frog) {
 		return;
 	frog->hasBomb = 0;
 	b->isBomb = 1;
-	SDL_Rect r = {48 * b->color, 2496, 48, 48};
+	SDL_Rect r = {48 * 5, 2496, 48, 48};   /* black bomb in flight too */
 	Animation_Init(&b->anim, TEX_GAME_OBJECTS, r);
 	Animation_Set(&b->anim, 0, 0, 0);
+	b->anim.color.r = b->anim.color.g = b->anim.color.b = 55;
 }
 
 void BulletsArr_AddBullet(BulletsArr* bulletsArr, Frog* frog) {

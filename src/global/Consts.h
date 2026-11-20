@@ -3,7 +3,7 @@
 
 #define SOUNDS_SFX_COUNT 6
 #define TEXTURES_COUNT 22 
-#define SOUNDS_COUNT 38
+#define SOUNDS_COUNT 39
 #define FONTS_COUNT 9
 
 const char *filesTextures[TEXTURES_COUNT] = {
@@ -71,6 +71,7 @@ const char *filesSounds[SOUNDS_COUNT] = {
     "slowdown1.ogg",
     "ufo1.ogg",
     "warning1.ogg",
+    "fuse.ogg",          /* bomb fuse sizzle (tools/make_fuse_sound.sh) */
 };
 
 const char *filesSoundsSfx[SOUNDS_SFX_COUNT] = {

@@ -49,6 +49,7 @@ enum _SoundID {
     SND_SLOWDOWN1,
     SND_UFO1,
     SND_WARNING1,
+    SND_FUSE,
 };
 
 enum _SoundSFXID {

@@ -1,4 +1,6 @@
 #include "Frog.h"
+#include <stdlib.h>
+#include <math.h>
 
 #define TO_DEGREES (180.0 / M_PI)
 
@@ -34,6 +36,43 @@ void Frog_Rotate(Frog* frog, int mx, int my) {
 
 	frog->forwardX = vecX;
 	frog->forwardY = vecY;
+}
+
+/* small orange spark on the bomb's fuse, flickering */
+static void Frog_DrawSpark(Engine *engine, Frog* frog, float bx, float by) {
+	/* fuse on the side of the bomb, toward the outside of the mouth */
+	float sx = bx + (float)frog->forwardX * 15 - (float)frog->forwardY * 12;
+	float sy = by + (float)frog->forwardY * 15 + (float)frog->forwardX * 12;
+
+	SDL_SetRenderDrawBlendMode(engine->render, SDL_BLENDMODE_ADD);
+	for (int k = 0; k < 9; k++) {
+		float a = (float)(rand() % 628) / 100.0f;
+		float len = 8 + rand() % 12;
+		float ex = sx + cosf(a) * len, ey = sy + sinf(a) * len;
+		SDL_Color hot  = { 255, 150, 20, 255 };
+		SDL_Color tip  = { 255, 80, 0, 0 };
+		SDL_Vertex v[3] = {
+			{ { sx - sinf(a) * 1.6f, sy + cosf(a) * 1.6f }, hot, { 0, 0 } },
+			{ { sx + sinf(a) * 1.6f, sy - cosf(a) * 1.6f }, hot, { 0, 0 } },
+			{ { ex, ey }, tip, { 0, 0 } },
+		};
+		SDL_RenderGeometry(engine->render, NULL, v, 3, NULL, 0);
+	}
+	/* round glowing core: orange outside, yellow-white inside */
+	for (int layer = 0; layer < 2; layer++) {
+		float rad = layer == 0 ? 7.0f : 3.5f;
+		SDL_Color mid  = layer == 0 ? (SDL_Color){255, 120, 0, 200} : (SDL_Color){255, 240, 170, 255};
+		SDL_Color edge = { 255, 90, 0, 0 };
+		SDL_Vertex v[3];
+		for (int k = 0; k < 12; k++) {
+			float a1 = k * 6.2832f / 12, a2 = (k + 1) * 6.2832f / 12;
+			v[0] = (SDL_Vertex){ { sx, sy }, mid, { 0, 0 } };
+			v[1] = (SDL_Vertex){ { sx + cosf(a1) * rad, sy + sinf(a1) * rad }, edge, { 0, 0 } };
+			v[2] = (SDL_Vertex){ { sx + cosf(a2) * rad, sy + sinf(a2) * rad }, edge, { 0, 0 } };
+			SDL_RenderGeometry(engine->render, NULL, v, 3, NULL, 0);
+		}
+	}
+	SDL_SetRenderDrawBlendMode(engine->render, SDL_BLENDMODE_BLEND);
 }
 
 void Frog_Draw(Engine *engine, Frog* frog, bool introEnd) {
@@ -81,14 +120,21 @@ void Frog_Draw(Engine *engine, Frog* frog, bool introEnd) {
 	//Drawing  currentBall
     SDL_Rect animBallRect = {48 * frog->color, 0, 48, 48};
 	if (frog->hasBomb) {   /* the bomb ball in the frog's mouth */
-		SDL_Rect bombRect = {48 * frog->color, 2496, 48, 48};
+		SDL_Rect bombRect = {48 * 5, 2496, 48, 48};   /* grey ball, darkened below */
 		animBallRect = bombRect;
 	}
 	Animation_Init(&anim, TEX_GAME_OBJECTS, animBallRect);
 	Animation_Set(&anim, frog->hasBomb ? 0 : 24, frog->hasBomb ? 0 : 47, 0);
 	Animation_SetAngle(&anim, frog->rotation);
-	Animation_Draw(engine, &anim, frogX + frog->forwardX*(FROG_CUR_BALL_PAD-frog->tongueShift), 
-		frogY + frog->forwardY*(FROG_CUR_BALL_PAD-frog->tongueShift));
+	float ballX = frogX + frog->forwardX*(FROG_CUR_BALL_PAD-frog->tongueShift);
+	float ballY = frogY + frog->forwardY*(FROG_CUR_BALL_PAD-frog->tongueShift);
+	if (frog->hasBomb) {
+		/* a black bomb */
+		anim.color.r = anim.color.g = anim.color.b = 55;
+	}
+	Animation_Draw(engine, &anim, ballX, ballY);
+	if (frog->hasBomb)
+		Frog_DrawSpark(engine, frog, ballX, ballY);
 
 	//Drawing  nextBall
     SDL_Rect animBallRect1 = {15 * frog->nextColor + 234, 633, 15, 15};

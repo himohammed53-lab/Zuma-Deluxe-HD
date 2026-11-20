@@ -293,6 +293,19 @@ static void _Game_UpdatePowerUps(Engine *engine, Game* game) {
     }
     ch->lastBonus = BONUS_NONE;
 
+    /* the fuse sizzles while the bomb is in the mouth */
+    static int fuseTimer = 0;
+    if (game->frog.hasBomb) {
+        if (--fuseTimer <= 0) {
+            Engine_PlaySound(engine, SND_FUSE);
+            fuseTimer = 75;   /* the sound is ~1.3 s */
+        }
+    } else {
+        if (fuseTimer > 0)
+            Engine_StopSound(engine, SND_FUSE);
+        fuseTimer = 0;
+    }
+
     if (ch->bombScore) {
         game->score += ch->bombScore;
         ch->bombScore = 0;
