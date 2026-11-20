@@ -30,6 +30,8 @@ typedef struct _BulletsArr {
 	int len;
 } BulletsArr;
 
+extern float Bullet_speedMul;
+
 void Bullet_Init(Bullet*, float, float, float, float, char);
 void Bullet_Update(Bullet*);
 void Bullet_Draw(Engine *engine, Bullet*);

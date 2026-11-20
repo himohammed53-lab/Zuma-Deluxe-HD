@@ -11,6 +11,7 @@ void Ball_Init(Ball* ball, float pos, float x, float y, char isPusher,
 	ball->inTunnel = false;
 	ball->drawPrority = false;
 	ball->bonus = bonus;
+	ball->bonusTime = 0;
 	ball->spd = 0;
 	ball->combo = 0;
 	ball->goBack = false;
@@ -22,6 +23,13 @@ void Ball_Init(Ball* ball, float pos, float x, float y, char isPusher,
 }
 
 void Ball_InitAnim(Ball* ball) {
+	if (ball->bonus) {
+		/* power-up ball: one picture, rows under the rolling balls */
+		SDL_Rect r = {48 * ball->color, 2400 + 48 * (ball->bonus - 1), 48, 48};
+		Animation_Init(&ball->anim, TEX_GAME_OBJECTS, r);
+		Animation_Set(&ball->anim, 0, 1, 0);
+		return;
+	}
 	SDL_Rect animBallRect = {48 * ball->color, 0, 48, 48};
 	Animation_Init(&ball->anim, TEX_GAME_OBJECTS, animBallRect);
 	if (ball->startAnim)
@@ -55,6 +63,7 @@ void Ball_Copy(Ball* src, Ball* dst) {
 	dst->color = src->color;
 	dst->combo = src->combo;
 	dst->bonus = src->bonus;
+	dst->bonusTime = src->bonusTime;
 	dst->anim = src->anim;
 	dst->spd = src->spd;
 	dst->goBack = src->goBack;
@@ -84,6 +93,7 @@ void BallChain_Init(BallChain* ballChain, Level* lvl, LevelSettings* settings) {
 	ballChain->isEndReached = 0;
 	ballChain->isGlowing = 0;
 	ballChain->chainBonus = 0;
+	ballChain->lastBonus = BONUS_NONE;
 	
 	ballChain->maxChainBonus = 0;
 	ballChain->totalCombos = 0;
@@ -409,6 +419,21 @@ void BallChain_UpdateCombos(BallChain* ballChain) {
 void BallChain_ExplodeBalls(Engine *engine, BallChain* ballChain, int start, int end) {
 	SDL_Rect animBallRect = {395, 0, 105, 120};	
 	int combo = 0;
+
+	/* a power-up ball in the group: tell the game; a bomb also takes
+	   the balls around it */
+	for (int i = start; i <= end; i++) {
+		char b = ballChain->balls[i].bonus;
+		if (b == BONUS_NONE || ballChain->balls[i].isExploding)
+			continue;
+		ballChain->lastBonus = b;
+		ballChain->balls[i].bonus = BONUS_NONE;
+		if (b == BONUS_BOMB) {
+			Engine_PlaySound(engine, SND_BOMBEXPLODE);
+			start = start - 3 < 0 ? 0 : start - 3;
+			end = end + 3 > ballChain->len - 1 ? ballChain->len - 1 : end + 3;
+		}
+	}
 	for (int i = start; i <= end; i++) {
 		Animation* ballAnim = &ballChain->balls[i].anim;
 		if (ballChain->balls[i].combo > combo) combo = ballChain->balls[i].combo;

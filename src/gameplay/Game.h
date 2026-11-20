@@ -70,6 +70,9 @@ typedef struct _Game {
 	DialogueBox* dbStats;
 	DialogueBox* dbGameOver;
 
+	/* power-ups (frames) */
+	int powerTimer, slowTime, reverseTime, accuracyTime;
+
 	bool goNextLevel;   /* NEXT LEVEL pressed in the results window */
 	bool retryLevel;    /* TRY AGAIN pressed in the game over window */
 

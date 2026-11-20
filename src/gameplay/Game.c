@@ -18,6 +18,10 @@ void Game_Init(LevelMgr *levelMgr, Engine *engine, Game* game, int lvlID, int di
     game->isLosed = false;
     game->isWon = false;
     game->goNextLevel = false;
+    /* first power-up after 12-20 s of play */
+    game->powerTimer = randInt(12 * 60, 20 * 60);
+    game->slowTime = game->reverseTime = game->accuracyTime = 0;
+    Bullet_speedMul = 1.0f;
     game->retryLevel = false;
     game->isOutroEnded = false;
     game->isIntroEnded = false;
@@ -239,8 +243,84 @@ static bool _Game_HandleMenu(Engine *engine, Game* game, int* inMenu) {
     return true;
 }
 
+/* ---- Power-ups, like the original Zuma: now and then one ball of the
+   chain carries a power-up for a while. Exploding it with balls of
+   its colour starts the power. ---- */
+static void _Game_UpdatePowerUps(Engine *engine, Game* game) {
+    BallChain* ch = &game->chain;
+
+    /* a power-up was exploded */
+    switch (ch->lastBonus) {
+        case BONUS_ACCURACY:
+            game->accuracyTime = 15 * 60;
+            Engine_PlaySound(engine, SND_ACCURACY3);
+            break;
+        case BONUS_REVERSE:
+            game->reverseTime = (int)(2.5f * 60);
+            game->slowTime = 0;
+            Engine_PlaySound(engine, SND_REVERSE1);
+            break;
+        case BONUS_SLOW:
+            game->slowTime = 8 * 60;
+            Engine_PlaySound(engine, SND_SLOWDOWN1);
+            break;
+        default:
+            break;   /* the bomb works inside the chain */
+    }
+    ch->lastBonus = BONUS_NONE;
+
+    if (game->reverseTime > 0) game->reverseTime--;
+    if (game->slowTime > 0) game->slowTime--;
+    if (game->accuracyTime > 0) game->accuracyTime--;
+    Bullet_speedMul = game->accuracyTime > 0 ? 1.7f : 1.0f;
+
+    /* power-ups on balls fade away after a while (blinking at the end) */
+    bool anyBonus = false;
+    for (int i = 0; i < ch->len; i++) {
+        Ball* b = &ch->balls[i];
+        if (!b->bonus)
+            continue;
+        anyBonus = true;
+        if (--b->bonusTime <= 0) {
+            b->bonus = BONUS_NONE;
+            Ball_InitAnim(b);
+        } else if (b->bonusTime < BONUS_BLINK_FRAMES) {
+            b->anim.color.a = ((b->bonusTime / 8) % 2) ? 255 : 110;
+        }
+    }
+
+    /* a new one now and then, never at the start of a level */
+    if (game->isFirstTime || game->isWon || game->isLosed || ch->isEndReached)
+        return;
+    if (anyBonus || --game->powerTimer > 0)
+        return;
+
+    game->powerTimer = randInt(15 * 60, 25 * 60);
+    if (ch->len < 8)
+        return;
+
+    for (int tries = 0; tries < 20; tries++) {
+        int i = randInt(0, ch->len - 1);
+        Ball* b = &ch->balls[i];
+        if (b->isExploding || b->inTunnel || b->startAnim || b->pos < 60)
+            continue;
+        b->bonus = randInt(BONUS_ACCURACY, BONUS_SLOW);
+        b->bonusTime = BONUS_LIFE_FRAMES;
+        Ball_InitAnim(b);
+        Engine_PlaySound(engine, SND_JEWELAPPEAR);
+        break;
+    }
+}
+
 static void _Game_GenerateChain(Engine *engine, Game* game) {
     game->chain.speed = game->settings->ballSpd;
+
+    /* power-ups change the speed for a while */
+    if (game->reverseTime > 0) {
+        game->chain.speed = -1.6f;
+    } else if (game->slowTime > 0) {
+        game->chain.speed = game->settings->ballSpd * 0.35f;
+    }
 
     if (!game->chain.isGenerating)
         return;
@@ -394,6 +474,8 @@ void Game_Update(LevelMgr *levelMgr, Engine *engine, Game* game, int* inMenu, in
 
     BallChain_Update(engine, &game->chain, game->lvl->spiral, 
         game->lvl->spiralLen, &game->score, &game->msgs);
+
+    _Game_UpdatePowerUps(engine, game);
     
     if (game->chain.len > 0) {
         BulletsArr_UpdateOnScreenStatus(engine, &game->bullets, &game->chain.chainBonus);
@@ -457,6 +539,27 @@ void Game_Update(LevelMgr *levelMgr, Engine *engine, Game* game, int* inMenu, in
 void Game_Draw(LevelMgr *levelMgr, Engine *engine, Game* game) {
     Level_Draw(engine, game->lvl);
     Game_DrawFinish(engine, game);
+    /* accuracy power-up: dotted aiming line in the colour of the ball */
+    if (game->accuracyTime > 0 && game->isIntroEnded && !game->isWon && !game->isLosed) {
+        static const Uint8 pal[6][3] = { {0,254,253}, {0,250,68}, {253,253,6},
+                                         {249,111,76}, {253,136,248}, {253,234,187} };
+        const Uint8* c = pal[(int)game->frog.color % 6];
+        SDL_SetRenderDrawBlendMode(engine->render, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(engine->render, c[0], c[1], c[2],
+                               game->accuracyTime < 120 && (game->accuracyTime / 8) % 2 ? 60 : 200);
+        float fx = game->frog.x, fy = game->frog.y;
+        float dx = (float)game->frog.forwardX, dy = (float)game->frog.forwardY;
+        for (float d = 60; d < 1600; d += 26) {
+            float x1 = fx + dx * d, y1 = fy + dy * d;
+            float x2 = fx + dx * (d + 14), y2 = fy + dy * (d + 14);
+            if (x1 < -20 || x1 > WINDOW_WIDTH + 20 || y1 < -20 || y1 > WINDOW_HEIGHT + 20)
+                break;
+            for (int o = -1; o <= 1; o++) {
+                SDL_RenderDrawLineF(engine->render, x1 + o * dy, y1 - o * dx, x2 + o * dy, y2 - o * dx);
+            }
+        }
+    }
+
     Frog_Draw(engine, &game->frog, game->isIntroEnded);
 
     if (!game->isIntroEnded) {

@@ -33,8 +33,14 @@
 #define RAD_TO_DEG 180/M_PI
 
 
+/* Power-up balls (like the original Zuma) */
+enum { BONUS_NONE = 0, BONUS_ACCURACY, BONUS_REVERSE, BONUS_BOMB, BONUS_SLOW };
+#define BONUS_LIFE_FRAMES  (15 * 60)   /* a power-up stays 15 s on its ball */
+#define BONUS_BLINK_FRAMES (4 * 60)    /* and blinks in its last 4 s */
+
 typedef struct _Ball {
 	char color, bonus;
+	int bonusTime;
 	bool goBack, isInserted, isExploding, 
 		isSingle, inTunnel, drawPrority, startAnim;
 	float pos, x, y, dx, dy, spd;
@@ -54,6 +60,7 @@ typedef struct _BallChain {
 	bool colorInChain[6], isGenerating, isEndReached, isGlowing;
 	clock_t glowTime;
 	Animation ballShadow;
+	char lastBonus;      /* power-up just exploded, handled by the game */
 } BallChain;
 
 void Ball_Init(Ball*, float, float, float, char, char, char);

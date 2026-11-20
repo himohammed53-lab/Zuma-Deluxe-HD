@@ -15,9 +15,11 @@ void Bullet_Init(Bullet* bullet, float x, float y, float motionVecX,
     Animation_Set(&bullet->anim, 24, 47, 0);
 }
 
+float Bullet_speedMul = 1.0f;   /* faster while the accuracy power-up is on */
+
 void Bullet_Update(Bullet* bullet) {
-	bullet->x += bullet->motionVecX * BULLET_SPEED;
-	bullet->y += bullet->motionVecY * BULLET_SPEED;
+	bullet->x += bullet->motionVecX * BULLET_SPEED * Bullet_speedMul;
+	bullet->y += bullet->motionVecY * BULLET_SPEED * Bullet_speedMul;
 }
 
 void Bullet_Draw(Engine *engine, Bullet* bullet) {
