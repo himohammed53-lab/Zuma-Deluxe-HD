@@ -20,6 +20,9 @@ from PIL import Image, ImageDraw, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CARVED_GEOM = None
+CUR_TEXT = None
+# same orange as the other pyramid names (this plank is lighter)
+TINT = {'صعب': (0.97, 0.86, 0.62)}
 ROOT = os.path.dirname(HERE)
 UPSTREAM = 'b05dc19'   # original pictures, before any change of ours
 KUFI = os.path.join(HERE, 'fonts', 'ReemKufi.ttf')
@@ -161,6 +164,8 @@ def paint_state(reg, style, text, lines, ref_mask=None, ref_box=None, seed=0):
     return r
 
 def _paint_state(reg, style, text, lines, ref_mask=None, ref_box=None, seed=0):
+    global CUR_TEXT
+    CUR_TEXT = text
     rgb = reg[:, :, :3].copy()
     h, w = rgb.shape[:2]
     # see-through pixels are black in the file: give them the plank colour
@@ -265,7 +270,7 @@ def _paint_state(reg, style, text, lines, ref_mask=None, ref_box=None, seed=0):
         gy, th = int(min(top_l(x0), top_l(x1))), int(hav)
     else:
         if style == 'embossed':
-            small = {'متوسط': 0.72, 'صعب': 0.72}.get(text, 1.0)   # as big as سهل
+            small = {'متوسط': 0.8, 'صعب': 0.72}.get(text, 1.0)   # as big as سهل
             a_fit = fit(a_src, bw * 0.85 * small, bh * 0.92 * small, style)
             cx, cy = (bx0 + bx1) / 2, h * 0.47   # middle of the plank face
         else:
@@ -311,6 +316,8 @@ def finish(reg, out, a, gy, th, good, outline, style, h, w):
             top = np.clip(a - np.pad(a, ((2, 0), (0, 0)))[:h, :], 0, 1)
             bot = np.clip(a - np.pad(a, ((0, 2), (0, 0)))[2:, :], 0, 1)
             gold = gold * (1 + 0.30 * top[:, :, None]) * (1 - 0.30 * bot[:, :, None])
+    if style == 'embossed' and TINT.get(CUR_TEXT):
+        gold = gold * np.array(TINT[CUR_TEXT], np.float32)
     out = out * (1 - a[:, :, None]) + np.clip(gold, 0, 255) * a[:, :, None]
 
     res = reg.copy()
