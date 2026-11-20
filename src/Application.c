@@ -149,7 +149,8 @@ static void ApplicationZuma_HandleEvents(App *app, Engine *engine) {
         if (e.button.button == SDL_BUTTON_LEFT) {
           /* black bars at the sides: dead, the finger does nothing */
           s_deadTouch = (e.button.x < 0 || e.button.x >= WINDOW_WIDTH) ||
-                        ApplicationZuma_IsOnGameButton(app, e.button.x, e.button.y);
+                        ApplicationZuma_IsOnGameButton(app, e.button.x, e.button.y) ||
+                        (!app->inMenu && e.button.y < 46);   /* top bar: score, lives, MENU */
           /* finger put on the frog = swap balls on release, frog stays still */
           Engine_SetAimFrozen(s_deadTouch || ApplicationZuma_IsOnFrog(app, engine));
         }

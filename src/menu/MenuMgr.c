@@ -25,6 +25,8 @@ void Button_Init(Button* btn) {
     btn->xscale = 1;
     btn->textScale = 1.0f;
     btn->drawW = 0;
+    btn->hitPadX = 0;
+    btn->hitPadY = 0;
 
     btn->pos.x = 0;
     btn->pos.y = 0;
@@ -44,10 +46,10 @@ void Button_Update(Engine *engine, Button* btn) {
     int bWidth = btn->drawW > 0 ? btn->drawW
                : btn->tRect.w + (btn->tRect.w / 3) * (btn->xscale-1);
 
-    if (mx > btn->pos.x + btn->deadBorder && 
-        my > btn->pos.y + btn->deadBorder &&
-        mx < btn->pos.x+bWidth - btn->deadBorder &&
-        my < btn->pos.y+btn->tRect.h - btn->deadBorder) {
+    if (mx > btn->pos.x + btn->deadBorder - btn->hitPadX && 
+        my > btn->pos.y + btn->deadBorder - btn->hitPadY &&
+        mx < btn->pos.x+bWidth - btn->deadBorder + btn->hitPadX &&
+        my < btn->pos.y+btn->tRect.h - btn->deadBorder + btn->hitPadY) {
             if (Engine_IsMouseDown()) {
                 if (btn->state != BTN_CLICKED) {
                     btn->state = BTN_CLICKED;
@@ -1227,6 +1229,8 @@ void MenuMgr_Set(Engine *engine, MenuMgr* m, int room) {
         btnBack.tRect = rBtnBack;
         btnBack.pos.x = 426;
         btnBack.pos.y = 667;
+        btnBack.hitPadX = 5;    /* bigger tap area, up to the next button */
+        btnBack.hitPadY = 30;   /* and up/down for fingers */
         Menu_AddButton(m->room, &btnBack);
 
         Button_Init(&btnPlay);
@@ -1234,6 +1238,8 @@ void MenuMgr_Set(Engine *engine, MenuMgr* m, int room) {
         btnPlay.tRect = rBtnPlay;
         btnPlay.pos.x = 576;
         btnPlay.pos.y = 667;
+        btnPlay.hitPadX = 5;    /* bigger tap area, up to the next button */
+        btnPlay.hitPadY = 30;   /* and up/down for fingers */
         Menu_AddButton(m->room, &btnPlay);
 
         Button_Init(&btnNext);
@@ -1241,6 +1247,8 @@ void MenuMgr_Set(Engine *engine, MenuMgr* m, int room) {
         btnNext.tRect = rBtnNext;
         btnNext.pos.x = 745;
         btnNext.pos.y = 667;
+        btnNext.hitPadX = 5;    /* bigger tap area, up to the next button */
+        btnNext.hitPadY = 30;   /* and up/down for fingers */
         Menu_AddButton(m->room, &btnNext);
 
         // Difficulty

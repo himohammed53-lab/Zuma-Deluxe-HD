@@ -809,7 +809,10 @@ void Game_DrawIntro(Engine *engine, Game* game) {
     SDL_Color color = {255, 255, 255, 255};
 
     sprintf(buff, "%s", game->graphics->dispName);
-    Engine_DrawTextExtScale(engine, buff, FONT_NATIVE_ALIEN_EXT_16, game->subHeaderFontScale, color, false, true, 
+    /* the level name never comes before the title */
+    float subScale = game->subHeaderFontScale < game->headerFontScale ?
+                     game->subHeaderFontScale : game->headerFontScale;
+    Engine_DrawTextExtScale(engine, buff, FONT_NATIVE_ALIEN_EXT_16, subScale, color, false, true, 
         WINDOW_WIDTH - 250, WINDOW_HEIGHT - 95);
 
     if (Lang_Get() == LANG_AR) {

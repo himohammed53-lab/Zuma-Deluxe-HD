@@ -38,6 +38,7 @@ typedef struct _Button {
 
     float textScale;   /* size of the button text, 1 = normal */
     int drawW;         /* > 0: exact width of a stretchable button */
+    int hitPadX, hitPadY;  /* tap area bigger than the picture (for fingers) */
 
     char text[32];
 } Button;
