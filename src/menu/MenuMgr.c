@@ -649,6 +649,14 @@ void DialogueBox_Destroy(DialogueBox* db) {
 
 /* Word + two language buttons, centred in the window.
    English: LANGUAGE [ENGLISH][ARABIC]   Arabic: [ENGLISH][ARABIC] (word) */
+/* Phones have no FULLSCREEN box: the language row moves down into
+   the middle of the free space */
+#if defined(__ANDROID__) || defined(ZT_PHONE)
+#define LANG_ROW_DOWN 36
+#else
+#define LANG_ROW_DOWN 0
+#endif
+
 #define DB_OPTIONS_LABEL_X (-56 - 170)   /* left edge of MUSIC / SOUNDS VOLUME */
 #define DB_OPTIONS_SLIDER_X (-56)
 
@@ -725,7 +733,7 @@ DialogueBox* DialogueBox_CreateOptions(Engine *engine) {
     strcpy(tSnd.str, "SOUNDS VOLUME");
     DialogueBox_AddText(db, &tSnd);
 
-#ifndef __ANDROID__
+#if !defined(__ANDROID__) && !defined(ZT_PHONE)
     CheckBox cbFullscr;
     CheckBox_Init(&cbFullscr);
     cbFullscr.checked = engine->fullScr;
@@ -746,7 +754,7 @@ DialogueBox* DialogueBox_CreateOptions(Engine *engine) {
     DialogueBoxText tLang;
     DialogueBoxText_Init(&tLang);
     tLang.pos.x = -258;
-    tLang.pos.y = slSnd.pos.y + 70;
+    tLang.pos.y = slSnd.pos.y + 70 + LANG_ROW_DOWN;
     strcpy(tLang.str, "LANGUAGE");
     db->langLabel = db->textsLen;
     DialogueBox_AddText(db, &tLang);
@@ -775,7 +783,7 @@ DialogueBox* DialogueBox_CreateOptions(Engine *engine) {
         b.deadBorder = 10; /* the two buttons touch: no shared tap area */
         b.textScale = 0.8f;
         b.pos.x = 0;   /* placed by DialogueBox_LayoutOptions */
-        b.pos.y = slSnd.pos.y + 52;
+        b.pos.y = slSnd.pos.y + 52 + LANG_ROW_DOWN;
         b.pressed = (Lang_Get() == (i == 0 ? LANG_EN : LANG_AR));
         DialogueBox_AddButton(db, &b);
     }
@@ -804,7 +812,7 @@ void DialogueBox_UpdateOptions(Engine *engine, DialogueBox* db) {
                 db->buttons[db->langBtn + i].state = BTN_IDLE;
     }
 
-#ifndef __ANDROID__
+#if !defined(__ANDROID__) && !defined(ZT_PHONE)
     if (CheckBox_IsClicked(&db->chBoxes[0])) {
         if (CheckBox_IsChecked(&db->chBoxes[0])) {
             SDL_SetWindowFullscreen(
