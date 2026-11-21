@@ -1680,15 +1680,20 @@ void MenuMgr_DrawProfiles(Engine *engine, MenuMgr* m) {
                 if (blink) {
                     /* thin upright cursor right before the first letter */
                     SDL_Rect cur = { (int)tx - 9, box.y + 9, 3, box.h - 18 };
-                    SDL_SetRenderDrawColor(engine->render, 255, 255, 255, 230);
+                    SDL_SetRenderDrawColor(engine->render, 236, 214, 120, 255);   /* colour of the letters */
                     SDL_RenderFillRect(engine->render, &cur);
                 }
             } else {
-                char shown[110];
-                SDL_snprintf(shown, sizeof(shown), "%s%s", name, blink ? "_" : "");
                 /* this font draws ~20px below its y, so lift it into the box */
-                Engine_DrawTextExt(engine, shown, FONT_NATIVE_ALIEN_EXT_16, white, true, false,
+                Engine_DrawTextExt(engine, name, FONT_NATIVE_ALIEN_EXT_16, white, true, false,
                     box.x + 14, box.y - 14);
+                if (blink) {
+                    /* thin upright cursor right after the last letter */
+                    int w = name[0] ? Engine_GetTextWidth(engine, name, FONT_NATIVE_ALIEN_EXT_16) : 0;
+                    SDL_Rect cur = { box.x + 14 + w + 5, box.y + 9, 3, box.h - 18 };
+                    SDL_SetRenderDrawColor(engine->render, 236, 214, 120, 255);   /* colour of the letters */
+                    SDL_RenderFillRect(engine->render, &cur);
+                }
             }
         }
     }
