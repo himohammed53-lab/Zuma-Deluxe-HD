@@ -116,6 +116,11 @@ static int ApplicationZuma_IsOnFrog(App *app, Engine *engine) {
   return dx * dx + dy * dy <= FROG_TAP_RADIUS * FROG_TAP_RADIUS;
 }
 
+#ifdef __ANDROID__
+static bool s_fingerActive = false;   /* a finger is aiming */
+static SDL_FingerID s_fingerID = 0;
+#endif
+
 static void ApplicationZuma_HandleEvents(App *app, Engine *engine) {
   app->mouseClicked = 0;
   Engine_InputBeginFrame();
@@ -135,6 +140,42 @@ static void ApplicationZuma_HandleEvents(App *app, Engine *engine) {
       else if (e.key.keysym.sym == SDLK_RETURN || e.key.keysym.sym == SDLK_KP_ENTER)
         Engine_TextInputEnter();
       break;
+#ifdef __ANDROID__
+    /* Every finger on its own: a finger resting on the black side bars
+       is ignored, and another finger in the game still aims and shoots. */
+    case SDL_FINGERDOWN: {
+      float fx = e.tfinger.x, fy = e.tfinger.y;   /* 0..1 of the game area */
+      bool onBar = fx <= 0.0005f || fx >= 0.9995f || fy <= 0.0005f || fy >= 0.9995f;
+      if (onBar || s_fingerActive)
+        break;
+      s_fingerActive = true;
+      s_fingerID = e.tfinger.fingerId;
+      int x = (int)(fx * WINDOW_WIDTH), y = (int)(fy * WINDOW_HEIGHT);
+      Engine_SetTouch(true);
+      Engine_SetFingerPos(x, y);
+      Engine_InputPointerDown();
+      s_deadTouch = ApplicationZuma_IsOnGameButton(app, x, y) ||
+                    (!app->inMenu && y < 46);   /* top bar: score, lives, MENU */
+      /* finger put on the frog = swap balls on release, frog stays still */
+      Engine_SetAimFrozen(s_deadTouch || ApplicationZuma_IsOnFrog(app, engine));
+      break;
+    }
+    case SDL_FINGERMOTION:
+      if (s_fingerActive && e.tfinger.fingerId == s_fingerID)
+        Engine_SetFingerPos((int)(e.tfinger.x * WINDOW_WIDTH), (int)(e.tfinger.y * WINDOW_HEIGHT));
+      break;
+    case SDL_FINGERUP:
+      if (!s_fingerActive || e.tfinger.fingerId != s_fingerID)
+        break;
+      Engine_SetFingerPos((int)(e.tfinger.x * WINDOW_WIDTH), (int)(e.tfinger.y * WINDOW_HEIGHT));
+      Engine_InputPointerUp();
+      if (!s_deadTouch)
+        app->mouseClicked = Engine_IsAimFrozen() ? 2 : 1;
+      s_deadTouch = false;
+      Engine_SetAimFrozen(false);
+      s_fingerActive = false;
+      break;
+#endif
     case SDL_MOUSEMOTION:
       Engine_SetTouch(e.motion.which == SDL_TOUCH_MOUSEID);
       break;
@@ -243,6 +284,8 @@ int ApplicationZuma_Start(void) {
   /* settings.txt and progress.bin are saved next to the game files */
   chdir(SDL_AndroidGetInternalStoragePath());
   SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
+  /* fingers are read one by one (SDL_FINGER* events), not as a mouse */
+  SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
 #endif
 
   if (!Engine_Init(&engine))

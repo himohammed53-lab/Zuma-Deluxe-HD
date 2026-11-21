@@ -109,6 +109,7 @@ void Engine_StopSoundSfx(Engine*, int);
 
 
 void Engine_GetMousePos(Engine *engine, int* mx, int* my);
+void Engine_SetFingerPos(int x, int y);   /* Android: the aiming finger */
 
 /* Pointer (mouse / touch) state, updated by the app event loop.
    A press is always visible for at least one frame, so a quick tap

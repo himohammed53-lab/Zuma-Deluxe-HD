@@ -649,9 +649,24 @@ void Engine_UpdateMusicVolume(Engine *engine) {
 /////////////////////////////////////////////////////////////////////////
 /* ==== Misc ==== */
 
+/* Android: the position of the finger that aims (game coordinates) */
+static bool s_fingerPos = false;
+static int s_fingerX = 0, s_fingerY = 0;
+void Engine_SetFingerPos(int x, int y) {
+    s_fingerPos = true;
+    s_fingerX = x;
+    s_fingerY = y;
+}
+
 void Engine_GetMousePos(Engine *engine, int* mx, int* my) {
     int _mx, _my;
     float lx, ly;
+
+    if (s_fingerPos) {
+        *mx = s_fingerX;
+        *my = s_fingerY;
+        return;
+    }
 
     SDL_GetMouseState(&_mx, &_my);
     /* Window -> game (1280x720) coordinates, black bars included */
