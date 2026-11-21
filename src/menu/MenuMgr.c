@@ -1340,7 +1340,7 @@ static DialogueBox* MenuMgr_CreatePlayersDialog(MenuMgr* m) {
         Button b;
         Button_Init(&b);
         Button_SetText(&b, labels[i]);
-        b.pos.x = -290 + i * 200;
+        b.pos.x = -290 + (i == 0 ? 0 : i == 1 ? 2 : 1) * 200;   /* OK, DELETE in the middle, NEW on the right */
         b.pos.y = 170;
         DialogueBox_AddButton(db, &b);
     }
@@ -1676,10 +1676,13 @@ void MenuMgr_DrawProfiles(Engine *engine, MenuMgr* m) {
                 int w = Engine_GetTextWidth(engine, name, FONT_NATIVE_ALIEN_EXT_16);
                 float tx = box.x + box.w - 14 - w;
                 Engine_DrawTextExt(engine, name, FONT_NATIVE_ALIEN_EXT_16, white, true, false,
-                    tx, box.y - 27);   /* room for letters below the line (ya) */
-                if (blink)
-                    Engine_DrawTextExt(engine, "_", FONT_NATIVE_ALIEN_EXT_16, white, true, false,
-                        tx - 26, box.y - 14);
+                    tx, box.y - 21);   /* middle of the box */
+                if (blink) {
+                    /* thin upright cursor right before the first letter */
+                    SDL_Rect cur = { (int)tx - 9, box.y + 9, 3, box.h - 18 };
+                    SDL_SetRenderDrawColor(engine->render, 255, 255, 255, 230);
+                    SDL_RenderFillRect(engine->render, &cur);
+                }
             } else {
                 char shown[110];
                 SDL_snprintf(shown, sizeof(shown), "%s%s", name, blink ? "_" : "");
