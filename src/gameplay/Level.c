@@ -144,7 +144,7 @@ static void LevelParser_ParseStageProgression(
             char* cid = strtok((char*)attribute[i], "stage");
             int stageID = atoi(cid)-1;
 
-            if (stageID > STAGE_COUNT) {
+            if (stageID < 0 || stageID >= STAGE_COUNT) {   /* was '>': wrote past the stages */
                 continue;
             }
 
@@ -182,7 +182,7 @@ static void LevelParser_ParseStageProgression(
             char* cid = strtok((char*)attribute[i], "diffi");
             int stageID = atoi(cid)-1;
 
-            if (stageID > STAGE_COUNT) {
+            if (stageID < 0 || stageID >= STAGE_COUNT) {   /* was '>': wrote past the stages */
                 continue;
             }
 

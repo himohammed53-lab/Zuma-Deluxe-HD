@@ -19,7 +19,7 @@ void Game_Init(LevelMgr *levelMgr, Engine *engine, Game* game, int lvlID, int di
     game->isWon = false;
     game->goNextLevel = false;
     /* first power-up after 12-20 s of play */
-    game->powerTimer = randInt(6 * 60, 10 * 60);   /* first after 6-10 s */
+    game->powerTimer = randInt(6 * 60, 10 * 60) + (difficulty >= 2 ? 6 * 60 : 0);   /* first after 6-10 s (hard: 12-16 s) */
     game->slowTime = game->reverseTime = game->accuracyTime = 0;
     Bullet_speedMul = 1.0f;
     game->retryLevel = false;
@@ -45,18 +45,17 @@ void Game_Init(LevelMgr *levelMgr, Engine *engine, Game* game, int lvlID, int di
        balls. The number of balls follows the length of the map's path,
        so short paths never get crowded. */
     {
-        static const float spd0[4]  = { 0.50f, 0.55f, 0.60f, 0.65f };   /* level 1 */
-        static const float spd1[4]  = { 0.80f, 0.90f, 1.00f, 1.10f };   /* last level */
-        static const float fill0[4] = { 0.36f, 0.38f, 0.40f, 0.42f };   /* part of the path */
-        static const float fill1[4] = { 0.48f, 0.55f, 0.62f, 0.68f };   /* filled at start */
-        static const int gauge0[4]  = { 1000, 1200, 1500, 1800 };       /* score to stop */
-        static const int gauge1[4]  = { 3500, 4000, 4500, 5000 };       /* new balls */
-        static const float slow[4]  = { 4.0f, 3.5f, 3.0f, 2.5f };
+        static const float spd0[4]  = { 0.45f, 0.55f, 0.70f, 0.80f };   /* level 1 */
+        static const float spd1[4]  = { 0.75f, 0.90f, 1.05f, 1.20f };   /* last level */
+        static const float fill0[4] = { 0.33f, 0.38f, 0.42f, 0.45f };   /* part of the path */
+        static const float fill1[4] = { 0.45f, 0.52f, 0.60f, 0.66f };   /* filled at start */
+        static const int gauge0[4]  = { 1000, 1500, 2200, 2800 };       /* score to stop */
+        static const int gauge1[4]  = { 3000, 3800, 4500, 5000 };       /* new balls */
+        static const float slow[4]  = { 4.5f, 3.5f, 2.5f, 2.0f };
         static const int partTime[4] = { 70, 100, 120, 150 };
         static const int settingsIdx[4] = { 4, 8, 13, 24 };
 
-        int d = difficulty;
-        constrain(&d, 0, 3);
+        int d = difficulty < 0 ? 0 : difficulty > 3 ? 3 : difficulty;
         float t = stg->levelsLen > 1 ? (float)game->lvlID / (float)(stg->levelsLen - 1) : 0.0f;
 
         game->settings = &levelMgr->settings[settingsIdx[d]];
@@ -65,7 +64,8 @@ void Game_Init(LevelMgr *levelMgr, Engine *engine, Game* game, int lvlID, int di
 
         float fill = fill0[d] + (fill1[d] - fill0[d]) * t;
         int start = (int)(game->lvl->spiralLen / BALLS_CHAIN_PAD * fill);
-        constrain(&start, 25, 80);
+        if (start < 25) start = 25;
+        if (start > 80) start = 80;
         st->ballStartCount = start;
 
         st->gaugeScore = gauge0[d] + (int)((gauge1[d] - gauge0[d]) * t);
@@ -74,10 +74,10 @@ void Game_Init(LevelMgr *levelMgr, Engine *engine, Game* game, int lvlID, int di
         /* colours: 4 on level 1 for everyone */
         int colors = 4;
         if (d == 0) colors = game->lvlID >= 9 ? 5 : 4;
-        if (d == 1) colors = game->lvlID >= 4 ? 5 : 4;
-        if (d == 2) colors = game->lvlID >= 11 ? 6 : (game->lvlID >= 5 ? 5 : 4);   /* +1 twice */
+        if (d == 1) colors = game->lvlID >= 2 ? 5 : 4;
+        if (d == 2) colors = game->lvlID >= 7 ? 6 : (game->lvlID >= 2 ? 5 : 4);   /* +1 twice */
         if (d == 3) colors = 4 + game->lvlID;   /* one more colour every level */
-        constrain(&colors, 4, 6);               /* the game has 6 colours */
+        if (colors > 6) colors = 6;               /* the game has 6 colours */
         st->ballColors = colors;
 
         st->slowFactor = slow[d];
@@ -355,7 +355,11 @@ static void _Game_UpdatePowerUps(Engine *engine, Game* game) {
     if (anyBonus || --game->powerTimer > 0)
         return;
 
-    game->powerTimer = randInt(9 * 60, 15 * 60);   /* then every 9-15 s */
+    /* fewer power-ups on the harder difficulties */
+    static const int pMin[4] = {  8, 10, 14, 17 };
+    static const int pMax[4] = { 13, 15, 20, 25 };
+    int pd = game->difficulty < 0 ? 0 : game->difficulty > 3 ? 3 : game->difficulty;
+    game->powerTimer = randInt(pMin[pd] * 60, pMax[pd] * 60);
     if (ch->len < 8)
         return;
 
@@ -378,7 +382,8 @@ static void _Game_UpdatePowerUps(Engine *engine, Game* game) {
         } while (kind == lastKind);
         lastKind = kind;
         b->bonus = kind;
-        b->bonusTime = BONUS_LIFE_FRAMES;
+        static const int life[4] = { 40, 40, 30, 25 };   /* seconds on the ball */
+        b->bonusTime = life[game->difficulty < 0 ? 0 : game->difficulty > 3 ? 3 : game->difficulty] * 60;
         Ball_InitAnim(b);
         Engine_PlaySound(engine, SND_JEWELAPPEAR);
         break;
@@ -434,7 +439,7 @@ static void _Game_HandleGameWon(Engine *engine, Game* game) {
 
     game->dbStats = DialogueBox_CreateResults(game->lvlID + 1 < LEVELS_COUNT);
 
-    char buff[8];
+    char buff[16];
     sprintf(buff, "%d", game->score);
     DialogueBox_SetTextStr(game->dbStats, 
         DB_RES_TEXT_POINTS, buff);
@@ -500,7 +505,7 @@ static bool _Game_IsGameLose(LevelMgr *levelMgr, Engine *engine, Game* game) {
 
     game->dbGameOver = DialogueBox_CreateGameOver();
 
-    char buff[8];
+    char buff[16];
     
     sprintf(buff, "%d", game->totalCoins);
     DialogueBox_SetTextStr(game->dbGameOver, 
@@ -936,7 +941,7 @@ void Game_UpdateOutro(Engine *engine, Game* game) {
         game->isOutroEnded = true;
         game->particles.len = 0;
 
-        char buff[8];
+        char buff[16];
         sprintf(buff, "%d", game->score);
         DialogueBox_SetTextStr(game->dbStats, 
             DB_RES_TEXT_POINTS, buff);
@@ -1010,8 +1015,10 @@ void Game_UpdateIntro(Engine *engine, Game* game) {
         game->particles.prevPos = game->particles.pos;
     }
     
-    game->particles.x += game->lvl->spiral[(int)game->particles.pos].dx * engine->scale_x * SPARKLES_MOVE_SPEED;
-    game->particles.y += game->lvl->spiral[(int)game->particles.pos].dy * engine->scale_y * SPARKLES_MOVE_SPEED;
+    int sp = (int)game->particles.pos;   /* never past the end of the path */
+    if (sp > game->lvl->spiralLen - 1) sp = game->lvl->spiralLen - 1;
+    game->particles.x += game->lvl->spiral[sp].dx * engine->scale_x * SPARKLES_MOVE_SPEED;
+    game->particles.y += game->lvl->spiral[sp].dy * engine->scale_y * SPARKLES_MOVE_SPEED;
     game->particles.pos +=  SPARKLES_MOVE_SPEED;
 
     float currTime = ((float)clock())/CLOCKS_PER_SEC;
@@ -1029,10 +1036,10 @@ void Game_UpdateIntro(Engine *engine, Game* game) {
 void Game_DrawIntro(Engine *engine, Game* game) {
     Particles_Draw(engine, &game->particles);
 
-    char buff[16];
+    char buff[64];   /* was 16: long level names overflowed it (crash) */
     SDL_Color color = {255, 255, 255, 255};
 
-    sprintf(buff, "%s", game->graphics->dispName);
+    SDL_snprintf(buff, sizeof(buff), "%s", game->graphics->dispName);
     /* the level name never comes before the title */
     float subScale = game->subHeaderFontScale < game->headerFontScale ?
                      game->subHeaderFontScale : game->headerFontScale;
