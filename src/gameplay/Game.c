@@ -40,49 +40,48 @@ void Game_Init(LevelMgr *levelMgr, Engine *engine, Game* game, int lvlID, int di
 
     game->graphics = LevelMgr_GetLevelGraphics(levelMgr, game->lvl);
     /* Difficulty balance for phones (aiming with a finger is slower than
-       with a mouse). Each step is a little harder than the one before:
-       speed, colours, how long the chain is and how much it slows down. */
-    switch(difficulty) {
-        case 0:   /* easy */
-            game->settings = &levelMgr->settings[4];
-            game->settings->ballSpd = 0.80f;
-            game->settings->ballColors = 4;
-            game->settings->ballStartCount = 40;
-            game->settings->gaugeScore = 3000;
-            game->settings->slowFactor = 4.0f;
-            game->settings->repeatChance = 50;
-            game->settings->partTime = 70;
-            break;
-        case 1:   /* medium */
-            game->settings = &levelMgr->settings[8];
-            game->settings->ballSpd = 0.85f;
-            game->settings->ballColors = 5;
-            game->settings->ballStartCount = 45;
-            game->settings->gaugeScore = 3500;
-            game->settings->slowFactor = 3.0f;
-            game->settings->repeatChance = 45;
-            game->settings->partTime = 100;
-            break;
-        case 2:   /* hard */
-            game->settings = &levelMgr->settings[13];
-            game->settings->ballSpd = 0.95f;
-            game->settings->ballColors = 5;
-            game->settings->ballStartCount = 50;
-            game->settings->gaugeScore = 4000;
-            game->settings->slowFactor = 2.5f;
-            game->settings->repeatChance = 40;
-            game->settings->partTime = 120;
-            break;
-        case 3:   /* extreme */
-            game->settings = &levelMgr->settings[24];
-            game->settings->ballSpd = 1.05f;
-            game->settings->ballColors = 6;
-            game->settings->ballStartCount = 55;
-            game->settings->gaugeScore = 4500;
-            game->settings->slowFactor = 2.0f;
-            game->settings->repeatChance = 40;
-            game->settings->partTime = 150;
-            break;
+       with a mouse). Level 1 is gentle on every difficulty; later levels
+       and higher difficulties get faster chains, more colours and more
+       balls. The number of balls follows the length of the map's path,
+       so short paths never get crowded. */
+    {
+        static const float spd0[4]  = { 0.50f, 0.55f, 0.60f, 0.65f };   /* level 1 */
+        static const float spd1[4]  = { 0.80f, 0.90f, 1.00f, 1.10f };   /* last level */
+        static const float fill0[4] = { 0.36f, 0.38f, 0.40f, 0.42f };   /* part of the path */
+        static const float fill1[4] = { 0.48f, 0.55f, 0.62f, 0.68f };   /* filled at start */
+        static const int gauge0[4]  = { 1000, 1200, 1500, 1800 };       /* score to stop */
+        static const int gauge1[4]  = { 3500, 4000, 4500, 5000 };       /* new balls */
+        static const float slow[4]  = { 4.0f, 3.5f, 3.0f, 2.5f };
+        static const int partTime[4] = { 70, 100, 120, 150 };
+        static const int settingsIdx[4] = { 4, 8, 13, 24 };
+
+        int d = difficulty;
+        constrain(&d, 0, 3);
+        float t = stg->levelsLen > 1 ? (float)game->lvlID / (float)(stg->levelsLen - 1) : 0.0f;
+
+        game->settings = &levelMgr->settings[settingsIdx[d]];
+        LevelSettings* st = game->settings;
+        st->ballSpd = spd0[d] + (spd1[d] - spd0[d]) * t;
+
+        float fill = fill0[d] + (fill1[d] - fill0[d]) * t;
+        int start = (int)(game->lvl->spiralLen / BALLS_CHAIN_PAD * fill);
+        constrain(&start, 25, 80);
+        st->ballStartCount = start;
+
+        st->gaugeScore = gauge0[d] + (int)((gauge1[d] - gauge0[d]) * t);
+        st->gaugeScore = st->gaugeScore / 100 * 100;
+
+        /* colours: 4 on level 1 for everyone */
+        int colors = 4;
+        if (d == 0) colors = game->lvlID >= 9 ? 5 : 4;
+        if (d == 1) colors = game->lvlID >= 4 ? 5 : 4;
+        if (d == 2) colors = game->lvlID >= 12 ? 6 : (game->lvlID >= 2 ? 5 : 4);
+        if (d == 3) colors = game->lvlID >= 6 ? 6 : (game->lvlID >= 1 ? 5 : 4);
+        st->ballColors = colors;
+
+        st->slowFactor = slow[d];
+        st->repeatChance = 50 - (int)(10 * t);
+        st->partTime = partTime[d];
     }
 
     if (levelMgr->bestTime[game->lvlID][game->difficulty] != 0)
@@ -299,7 +298,7 @@ static void _Game_UpdatePowerUps(Engine *engine, Game* game) {
             Engine_PlaySound(engine, SND_REVERSE1);
             break;
         case BONUS_SLOW:
-            game->slowTime = 7 * 60;       /* 7 s */
+            game->slowTime = 6 * 60;       /* 6 s */
             Engine_PlaySound(engine, SND_SLOWDOWN1);
             break;
         case BONUS_BOMB:
@@ -355,7 +354,7 @@ static void _Game_UpdatePowerUps(Engine *engine, Game* game) {
     if (anyBonus || --game->powerTimer > 0)
         return;
 
-    game->powerTimer = randInt(8 * 60, 14 * 60);   /* then every 8-14 s */
+    game->powerTimer = randInt(9 * 60, 15 * 60);   /* then every 9-15 s */
     if (ch->len < 8)
         return;
 
@@ -364,7 +363,20 @@ static void _Game_UpdatePowerUps(Engine *engine, Game* game) {
         Ball* b = &ch->balls[i];
         if (b->isExploding || b->inTunnel || b->startAnim || b->pos < 60)
             continue;
-        b->bonus = randInt(BONUS_ACCURACY, BONUS_SLOW);
+        /* which power: when the chain is near the skull, Reverse and Slow
+           come more often; never the same power twice in a row */
+        bool danger = ch->balls[0].pos > game->lvl->spiralLen * 0.65f;   /* front ball */
+        static int lastKind = BONUS_NONE;
+        int kind;
+        do {
+            int r = randInt(0, 99);
+            if (danger)
+                kind = r < 35 ? BONUS_REVERSE : r < 70 ? BONUS_SLOW : r < 85 ? BONUS_BOMB : BONUS_ACCURACY;
+            else
+                kind = r < 30 ? BONUS_ACCURACY : r < 55 ? BONUS_SLOW : r < 75 ? BONUS_REVERSE : BONUS_BOMB;
+        } while (kind == lastKind);
+        lastKind = kind;
+        b->bonus = kind;
         b->bonusTime = BONUS_LIFE_FRAMES;
         Ball_InitAnim(b);
         Engine_PlaySound(engine, SND_JEWELAPPEAR);
