@@ -45,13 +45,15 @@ void Game_Init(LevelMgr *levelMgr, Engine *engine, Game* game, int lvlID, int di
        balls. The number of balls follows the length of the map's path,
        so short paths never get crowded. */
     {
-        static const float spd0[4]  = { 0.45f, 0.55f, 0.70f, 0.80f };   /* level 1 */
-        static const float spd1[4]  = { 0.75f, 0.90f, 1.05f, 1.20f };   /* last level */
-        static const float fill0[4] = { 0.33f, 0.38f, 0.42f, 0.45f };   /* part of the path */
-        static const float fill1[4] = { 0.45f, 0.52f, 0.60f, 0.66f };   /* filled at start */
-        static const int gauge0[4]  = { 1000, 1500, 2200, 2800 };       /* score to stop */
-        static const int gauge1[4]  = { 3000, 3800, 4500, 5000 };       /* new balls */
-        static const float slow[4]  = { 4.5f, 3.5f, 2.5f, 2.0f };
+        /* easy = relaxed, medium = normal fun, hard = a real challenge,
+           extreme = very hard; none of them impossible on a phone */
+        static const float spd0[4]  = { 0.45f, 0.55f, 0.65f, 0.75f };   /* level 1 */
+        static const float spd1[4]  = { 0.70f, 0.85f, 0.95f, 1.10f };   /* last level */
+        static const float fill0[4] = { 0.33f, 0.37f, 0.40f, 0.44f };   /* part of the path */
+        static const float fill1[4] = { 0.42f, 0.50f, 0.55f, 0.60f };   /* filled at start */
+        static const int gauge0[4]  = { 1000, 1500, 2000, 2500 };       /* score to stop */
+        static const int gauge1[4]  = { 2800, 3500, 4000, 4500 };       /* new balls */
+        static const float slow[4]  = { 4.5f, 4.0f, 3.0f, 2.5f };       /* slow down near the skull */
         static const int partTime[4] = { 70, 100, 120, 150 };
         static const int settingsIdx[4] = { 4, 8, 13, 24 };
 
@@ -73,9 +75,9 @@ void Game_Init(LevelMgr *levelMgr, Engine *engine, Game* game, int lvlID, int di
 
         /* colours: 4 on level 1 for everyone */
         int colors = 4;
-        if (d == 0) colors = game->lvlID >= 9 ? 5 : 4;
-        if (d == 1) colors = game->lvlID >= 2 ? 5 : 4;
-        if (d == 2) colors = game->lvlID >= 7 ? 6 : (game->lvlID >= 2 ? 5 : 4);   /* +1 twice */
+        if (d == 0) colors = game->lvlID >= 9 ? 5 : 4;                           /* easy */
+        if (d == 1) colors = game->lvlID >= 3 ? 5 : 4;                           /* medium */
+        if (d == 2) colors = game->lvlID >= 8 ? 6 : (game->lvlID >= 2 ? 5 : 4);   /* hard: +1 twice */
         if (d == 3) colors = 4 + game->lvlID;   /* one more colour every level */
         if (colors > 6) colors = 6;               /* the game has 6 colours */
         st->ballColors = colors;
@@ -356,8 +358,8 @@ static void _Game_UpdatePowerUps(Engine *engine, Game* game) {
         return;
 
     /* fewer power-ups on the harder difficulties */
-    static const int pMin[4] = {  8, 10, 14, 17 };
-    static const int pMax[4] = { 13, 15, 20, 25 };
+    static const int pMin[4] = {  8, 10, 12, 15 };
+    static const int pMax[4] = { 12, 15, 18, 22 };
     int pd = game->difficulty < 0 ? 0 : game->difficulty > 3 ? 3 : game->difficulty;
     game->powerTimer = randInt(pMin[pd] * 60, pMax[pd] * 60);
     if (ch->len < 8)
@@ -382,7 +384,7 @@ static void _Game_UpdatePowerUps(Engine *engine, Game* game) {
         } while (kind == lastKind);
         lastKind = kind;
         b->bonus = kind;
-        static const int life[4] = { 40, 40, 30, 25 };   /* seconds on the ball */
+        static const int life[4] = { 40, 40, 35, 30 };   /* seconds on the ball */
         b->bonusTime = life[game->difficulty < 0 ? 0 : game->difficulty > 3 ? 3 : game->difficulty] * 60;
         Ball_InitAnim(b);
         Engine_PlaySound(engine, SND_JEWELAPPEAR);
