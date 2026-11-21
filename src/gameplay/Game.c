@@ -75,8 +75,9 @@ void Game_Init(LevelMgr *levelMgr, Engine *engine, Game* game, int lvlID, int di
         int colors = 4;
         if (d == 0) colors = game->lvlID >= 9 ? 5 : 4;
         if (d == 1) colors = game->lvlID >= 4 ? 5 : 4;
-        if (d == 2) colors = game->lvlID >= 12 ? 6 : (game->lvlID >= 2 ? 5 : 4);
-        if (d == 3) colors = game->lvlID >= 6 ? 6 : (game->lvlID >= 1 ? 5 : 4);
+        if (d == 2) colors = game->lvlID >= 11 ? 6 : (game->lvlID >= 5 ? 5 : 4);   /* +1 twice */
+        if (d == 3) colors = 4 + game->lvlID;   /* one more colour every level */
+        constrain(&colors, 4, 6);               /* the game has 6 colours */
         st->ballColors = colors;
 
         st->slowFactor = slow[d];
